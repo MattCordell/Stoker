@@ -1,0 +1,20 @@
+{
+  "publishers": [
+    {
+      "id": "adha",
+      "name": "Australian Digital Health Agency",
+      "contact": {
+        "system": "email",
+        "value": "help@digitalhealth.gov.au"
+      }
+    },
+    {
+      "id": "rcpa",
+      "name": "RCPA",
+      "contact": {
+        "system": "email",
+        "value": "help@digitalhealth.gov.au"
+      }
+    }
+  ]
+}

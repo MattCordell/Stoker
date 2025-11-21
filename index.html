@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FHIR ValueSet Creator</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        h1 {
+            grid-column: 1 / -1;
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            grid-column: 1 / -1;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .label-hint {
+            font-weight: normal;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input {
+            width: auto;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .load-section {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .load-section input[type="file"] {
+            display: none;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .radio-option:hover {
+            background: var(--bg);
+        }
+
+        .radio-option.selected {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .radio-option input {
+            margin: 0;
+        }
+
+        .compose-content {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 4px;
+            display: none;
+        }
+
+        .compose-content.active {
+            display: block;
+        }
+
+        .code-list-input {
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            min-height: 150px;
+        }
+
+        .preview-section {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .json-preview {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.75rem;
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .json-key { color: #7dd3fc; }
+        .json-string { color: #86efac; }
+        .json-number { color: #fcd34d; }
+        .json-boolean { color: #f472b6; }
+
+        .output-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            background: var(--success);
+            color: white;
+            font-weight: 500;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .identifier-input {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .identifier-prefix {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        .version-highlight {
+            border-color: var(--warning) !important;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .code-system-select {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FHIR ValueSet Creator</h1>
+        <p class="subtitle">Create FHIR R4 ValueSet resources for download</p>
+
+        <div class="load-section card">
+            <input type="file" id="loadFile" accept=".json">
+            <button class="btn btn-secondary" onclick="document.getElementById('loadFile').click()">
+                Load Existing ValueSet
+            </button>
+            <span id="loadedFileName" style="color: var(--text-muted); font-size: 0.875rem;"></span>
+            <button class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+        </div>
+
+        <div class="form-column">
+            <div class="card">
+                <h2>Metadata</h2>
+
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" placeholder="e.g., Adverse Reaction Agent" oninput="suggestName()">
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Name <span class="label-hint">(PascalCase, no spaces)</span></label>
+                    <input type="text" id="name" placeholder="e.g., AdverseReactionAgent">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" placeholder="Describe what this ValueSet contains and its purpose..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="narrativeText">Narrative Text <span class="label-hint">(optional, defaults to description)</span></label>
+                    <textarea id="narrativeText" placeholder="Custom text for the narrative div (leave empty to use description)"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="version">Version</label>
+                        <input type="text" id="version" value="1.0.0" placeholder="e.g., 1.0.0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status">
+                            <option value="draft">Draft</option>
+                            <option value="active" selected>Active</option>
+                            <option value="retired">Retired</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date">
+                    </div>
+
+                    <div class="form-group checkbox-group" style="padding-top: 1.5rem;">
+                        <input type="checkbox" id="experimental">
+                        <label for="experimental" style="margin: 0;">Experimental</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="identifier">Identifier <span class="label-hint">(OID value)</span></label>
+                    <div class="identifier-input">
+                        <span class="identifier-prefix">urn:oid:</span>
+                        <input type="text" id="identifier" placeholder="e.g., 1.2.36.1.2001.1004.201.10036">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1rem;">
+                <h2>Publisher & Copyright</h2>
+
+                <div class="form-group">
+                    <label for="publisher">Publisher</label>
+                    <select id="publisher">
+                        <option value="">-- Select Publisher --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="copyright">Copyright Statement</label>
+                    <select id="copyright">
+                        <option value="">-- Select Copyright --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1rem;">
+                <h2>Compose</h2>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Choose how to define the contents of this ValueSet
+                </p>
+
+                <div class="radio-group">
+                    <label class="radio-option" onclick="selectComposeType('codeList')">
+                        <input type="radio" name="composeType" value="codeList" checked>
+                        <span>Code List (explicit codes)</span>
+                    </label>
+                    <label class="radio-option" onclick="selectComposeType('ecl')">
+                        <input type="radio" name="composeType" value="ecl">
+                        <span>SNOMED CT ECL Expression</span>
+                    </label>
+                    <label class="radio-option" onclick="selectComposeType('filter')">
+                        <input type="radio" name="composeType" value="filter">
+                        <span>FHIR Filter</span>
+                    </label>
+                    <label class="radio-option" onclick="selectComposeType('valueSetRef')">
+                        <input type="radio" name="composeType" value="valueSetRef">
+                        <span>Reference External ValueSet</span>
+                    </label>
+                    <label class="radio-option" onclick="selectComposeType('entireSystem')">
+                        <input type="radio" name="composeType" value="entireSystem">
+                        <span>Include Entire CodeSystem</span>
+                    </label>
+                </div>
+
+                <div id="compose-codeList" class="compose-content active">
+                    <div class="form-group">
+                        <label for="codeSystem">Code System</label>
+                        <select id="codeSystem" class="code-system-select">
+                            <option value="http://snomed.info/sct">SNOMED CT (http://snomed.info/sct)</option>
+                            <option value="http://loinc.org">LOINC (http://loinc.org)</option>
+                            <option value="http://terminology.hl7.org/CodeSystem/data-absent-reason">HL7 Data Absent Reason</option>
+                            <option value="custom">Custom System URL...</option>
+                        </select>
+                        <input type="text" id="customCodeSystem" placeholder="Enter custom code system URL" style="margin-top: 0.5rem; display: none;">
+                    </div>
+                    <div class="form-group">
+                        <label for="codeListInput">Codes <span class="label-hint">(one per line, or code,display format)</span></label>
+                        <textarea id="codeListInput" class="code-list-input" placeholder="281647001&#10;419076005&#10;or&#10;281647001,Adverse reaction&#10;419076005,Allergic reaction"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <input type="file" id="codeListFile" accept=".csv,.txt" style="display: none;">
+                        <button class="btn btn-secondary" onclick="document.getElementById('codeListFile').click()">
+                            Upload Code List File
+                        </button>
+                    </div>
+                </div>
+
+                <div id="compose-ecl" class="compose-content">
+                    <div class="form-group">
+                        <label for="eclExpression">ECL Expression</label>
+                        <textarea id="eclExpression" class="code-list-input" placeholder="e.g., < 394658006|Clinical specialty|&#10;or&#10;^ 32570211000036100 |Substance foundation reference set|"></textarea>
+                    </div>
+                </div>
+
+                <div id="compose-filter" class="compose-content">
+                    <div class="form-group">
+                        <label for="filterSystem">Code System</label>
+                        <select id="filterSystem">
+                            <option value="http://snomed.info/sct">SNOMED CT (http://snomed.info/sct)</option>
+                            <option value="http://loinc.org">LOINC (http://loinc.org)</option>
+                            <option value="custom">Custom System URL...</option>
+                        </select>
+                        <input type="text" id="customFilterSystem" placeholder="Enter custom code system URL" style="margin-top: 0.5rem; display: none;">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="filterProperty">Property</label>
+                            <select id="filterProperty">
+                                <option value="concept">concept</option>
+                                <option value="constraint">constraint</option>
+                                <option value="code">code</option>
+                                <option value="display">display</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="filterOp">Operator</label>
+                            <select id="filterOp">
+                                <option value="=">=</option>
+                                <option value="in">in</option>
+                                <option value="not-in">not-in</option>
+                                <option value="is-a">is-a</option>
+                                <option value="descendent-of">descendent-of</option>
+                                <option value="is-not-a">is-not-a</option>
+                                <option value="regex">regex</option>
+                                <option value="exists">exists</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterValue">Value</label>
+                        <input type="text" id="filterValue" placeholder="e.g., 142341000036103">
+                    </div>
+                </div>
+
+                <div id="compose-valueSetRef" class="compose-content">
+                    <div class="form-group">
+                        <label for="valueSetRefUrl">External ValueSet URL</label>
+                        <input type="text" id="valueSetRefUrl" placeholder="e.g., http://snomed.info/sct/32506021000036107?fhir_vs=refset/1072351000168102">
+                    </div>
+                </div>
+
+                <div id="compose-entireSystem" class="compose-content">
+                    <div class="form-group">
+                        <label for="entireSystemUrl">Code System URL</label>
+                        <select id="entireSystemSelect">
+                            <option value="http://snomed.info/sct">SNOMED CT (http://snomed.info/sct)</option>
+                            <option value="http://loinc.org">LOINC (http://loinc.org)</option>
+                            <option value="custom">Custom System URL...</option>
+                        </select>
+                        <input type="text" id="entireSystemUrl" placeholder="Enter code system URL" style="margin-top: 0.5rem; display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-column">
+            <div class="card preview-section">
+                <h2>JSON Preview</h2>
+                <div id="jsonPreview" class="json-preview">
+                    // ValueSet JSON will appear here...
+                </div>
+                <div class="output-actions">
+                    <button class="btn btn-primary" onclick="downloadJSON()">Download JSON</button>
+                    <button class="btn btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Configuration data
+        let publishers = [];
+        let copyrights = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadConfig();
+            setDefaultDate();
+            updatePreview();
+            setupEventListeners();
+        });
+
+        async function loadConfig() {
+            try {
+                const [pubRes, copyRes] = await Promise.all([
+                    fetch('config/publishers.json'),
+                    fetch('config/copyrights.json')
+                ]);
+
+                const pubData = await pubRes.json();
+                const copyData = await copyRes.json();
+
+                publishers = pubData.publishers;
+                copyrights = copyData.copyrights;
+
+                populatePublishers();
+                populateCopyrights();
+            } catch (err) {
+                console.error('Failed to load config:', err);
+                showNotification('Failed to load configuration files', 'error');
+            }
+        }
+
+        function populatePublishers() {
+            const select = document.getElementById('publisher');
+            publishers.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = p.name;
+                select.appendChild(option);
+            });
+        }
+
+        function populateCopyrights() {
+            const select = document.getElementById('copyright');
+            copyrights.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.id;
+                option.textContent = c.name;
+                select.appendChild(option);
+            });
+        }
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+        }
+
+        function setupEventListeners() {
+            // Update preview on any input change
+            document.querySelectorAll('input, textarea, select').forEach(el => {
+                el.addEventListener('input', updatePreview);
+                el.addEventListener('change', updatePreview);
+            });
+
+            // File upload handlers
+            document.getElementById('loadFile').addEventListener('change', loadExistingValueSet);
+            document.getElementById('codeListFile').addEventListener('change', loadCodeListFile);
+
+            // Custom code system toggles
+            document.getElementById('codeSystem').addEventListener('change', (e) => {
+                document.getElementById('customCodeSystem').style.display =
+                    e.target.value === 'custom' ? 'block' : 'none';
+            });
+            document.getElementById('filterSystem').addEventListener('change', (e) => {
+                document.getElementById('customFilterSystem').style.display =
+                    e.target.value === 'custom' ? 'block' : 'none';
+            });
+            document.getElementById('entireSystemSelect').addEventListener('change', (e) => {
+                document.getElementById('entireSystemUrl').style.display =
+                    e.target.value === 'custom' ? 'block' : 'none';
+            });
+        }
+
+        function suggestName() {
+            const title = document.getElementById('title').value;
+            const name = title.split(/\s+/).map(word =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join('');
+            document.getElementById('name').value = name;
+            updatePreview();
+        }
+
+        function selectComposeType(type) {
+            // Update radio buttons
+            document.querySelectorAll('.radio-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector(`input[value="${type}"]`).closest('.radio-option').classList.add('selected');
+            document.querySelector(`input[value="${type}"]`).checked = true;
+
+            // Show/hide compose content
+            document.querySelectorAll('.compose-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(`compose-${type}`).classList.add('active');
+
+            updatePreview();
+        }
+
+        function generateValueSet() {
+            const name = document.getElementById('name').value || 'ExampleValueSet';
+            const version = document.getElementById('version').value || '1.0.0';
+            const title = document.getElementById('title').value || '';
+            const description = document.getElementById('description').value || '';
+            const narrativeText = document.getElementById('narrativeText').value || description;
+            const status = document.getElementById('status').value;
+            const experimental = document.getElementById('experimental').checked;
+            const date = document.getElementById('date').value;
+            const identifier = document.getElementById('identifier').value;
+
+            // Publisher and copyright
+            const publisherId = document.getElementById('publisher').value;
+            const publisher = publishers.find(p => p.id === publisherId);
+            const copyrightId = document.getElementById('copyright').value;
+            const copyrightTemplate = copyrights.find(c => c.id === copyrightId);
+
+            // Generate derived values
+            const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+            const majorVersion = version.split('.')[0];
+            const id = `${kebabName}-${version}`;
+            const url = `https://healthterminologies.gov.au/fhir/ValueSet/${kebabName}-${majorVersion}`;
+
+            // Build copyright with year substitution
+            let copyrightText = '';
+            if (copyrightTemplate) {
+                const currentYear = new Date().getFullYear();
+                copyrightText = copyrightTemplate.template
+                    .replace(/\{\{year\}\}/g, currentYear)
+                    .replace(/\{\{publisher\}\}/g, publisher?.name || '');
+            }
+
+            // Build narrative
+            const narrativeDiv = `<div xmlns="http://www.w3.org/1999/xhtml"><h2>${title}</h2><tt>${url}</tt><p>${narrativeText}</p></div>`;
+
+            // Build compose section
+            const compose = buildCompose();
+
+            const valueSet = {
+                resourceType: 'ValueSet',
+                id: id,
+                meta: {
+                    profile: [
+                        'http://hl7.org/fhir/StructureDefinition/shareablevalueset',
+                        'https://healthterminologies.gov.au/fhir/StructureDefinition/composed-value-set-4'
+                    ]
+                },
+                text: {
+                    status: 'generated',
+                    div: narrativeDiv
+                },
+                url: url
+            };
+
+            // Add identifier if provided
+            if (identifier) {
+                valueSet.identifier = [{
+                    system: 'urn:ietf:rfc:3986',
+                    value: `urn:oid:${identifier}`
+                }];
+            }
+
+            valueSet.version = version;
+            valueSet.name = name;
+            valueSet.title = title;
+            valueSet.status = status;
+            valueSet.experimental = experimental;
+
+            if (date) {
+                valueSet.date = date;
+            }
+
+            if (publisher) {
+                valueSet.publisher = publisher.name;
+                valueSet.contact = [{
+                    telecom: [{
+                        system: publisher.contact.system,
+                        value: publisher.contact.value
+                    }]
+                }];
+            }
+
+            valueSet.description = description;
+
+            if (copyrightText) {
+                valueSet.copyright = copyrightText;
+            }
+
+            valueSet.compose = compose;
+
+            return valueSet;
+        }
+
+        function buildCompose() {
+            const composeType = document.querySelector('input[name="composeType"]:checked').value;
+            const compose = { include: [] };
+
+            switch (composeType) {
+                case 'codeList': {
+                    let system = document.getElementById('codeSystem').value;
+                    if (system === 'custom') {
+                        system = document.getElementById('customCodeSystem').value;
+                    }
+                    const codes = parseCodeList(document.getElementById('codeListInput').value);
+                    if (codes.length > 0) {
+                        compose.include.push({
+                            system: system,
+                            concept: codes
+                        });
+                    } else {
+                        compose.include.push({ system: system });
+                    }
+                    break;
+                }
+                case 'ecl': {
+                    const ecl = document.getElementById('eclExpression').value;
+                    compose.include.push({
+                        system: 'http://snomed.info/sct',
+                        filter: [{
+                            property: 'constraint',
+                            op: '=',
+                            value: ecl
+                        }]
+                    });
+                    break;
+                }
+                case 'filter': {
+                    let system = document.getElementById('filterSystem').value;
+                    if (system === 'custom') {
+                        system = document.getElementById('customFilterSystem').value;
+                    }
+                    compose.include.push({
+                        system: system,
+                        filter: [{
+                            property: document.getElementById('filterProperty').value,
+                            op: document.getElementById('filterOp').value,
+                            value: document.getElementById('filterValue').value
+                        }]
+                    });
+                    break;
+                }
+                case 'valueSetRef': {
+                    compose.include.push({
+                        valueSet: [document.getElementById('valueSetRefUrl').value]
+                    });
+                    break;
+                }
+                case 'entireSystem': {
+                    let system = document.getElementById('entireSystemSelect').value;
+                    if (system === 'custom') {
+                        system = document.getElementById('entireSystemUrl').value;
+                    }
+                    compose.include.push({
+                        system: system
+                    });
+                    break;
+                }
+            }
+
+            return compose;
+        }
+
+        function parseCodeList(input) {
+            const lines = input.trim().split('\n').filter(line => line.trim());
+            return lines.map(line => {
+                const parts = line.split(',').map(p => p.trim());
+                const concept = { code: parts[0] };
+                if (parts[1]) {
+                    concept.display = parts[1];
+                }
+                return concept;
+            });
+        }
+
+        function updatePreview() {
+            const valueSet = generateValueSet();
+            const json = JSON.stringify(valueSet, null, 2);
+            document.getElementById('jsonPreview').innerHTML = syntaxHighlight(json);
+        }
+
+        function syntaxHighlight(json) {
+            return json
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+                    let cls = 'json-number';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'json-key';
+                        } else {
+                            cls = 'json-string';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'json-boolean';
+                    }
+                    return `<span class="${cls}">${match}</span>`;
+                });
+        }
+
+        function downloadJSON() {
+            const valueSet = generateValueSet();
+            const json = JSON.stringify(valueSet, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ValueSet-${valueSet.id}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showNotification('ValueSet downloaded successfully!');
+        }
+
+        function copyToClipboard() {
+            const valueSet = generateValueSet();
+            const json = JSON.stringify(valueSet, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                showNotification('Copied to clipboard!');
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.background = type === 'error' ? 'var(--error)' : 'var(--success)';
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        async function loadExistingValueSet(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const valueSet = JSON.parse(text);
+
+                populateFormFromValueSet(valueSet);
+                document.getElementById('loadedFileName').textContent = `Loaded: ${file.name}`;
+                showNotification('ValueSet loaded! Update version and date as needed.');
+
+                // Highlight version field
+                document.getElementById('version').classList.add('version-highlight');
+
+            } catch (err) {
+                showNotification('Failed to parse JSON file', 'error');
+                console.error(err);
+            }
+
+            event.target.value = '';
+        }
+
+        function populateFormFromValueSet(vs) {
+            // Basic metadata
+            document.getElementById('title').value = vs.title || '';
+            document.getElementById('name').value = vs.name || '';
+            document.getElementById('description').value = vs.description || '';
+            document.getElementById('version').value = vs.version || '1.0.0';
+            document.getElementById('status').value = vs.status || 'active';
+            document.getElementById('experimental').checked = vs.experimental === true;
+
+            // Set date to today for new version
+            setDefaultDate();
+
+            // Narrative text
+            if (vs.text?.div) {
+                // Extract text from div
+                const match = vs.text.div.match(/<p>(.*?)<\/p>/);
+                if (match) {
+                    document.getElementById('narrativeText').value = match[1];
+                }
+            }
+
+            // Identifier
+            if (vs.identifier?.[0]?.value) {
+                const oid = vs.identifier[0].value.replace('urn:oid:', '');
+                document.getElementById('identifier').value = oid;
+            }
+
+            // Publisher - try to match
+            if (vs.publisher) {
+                const matchedPub = publishers.find(p => p.name === vs.publisher);
+                if (matchedPub) {
+                    document.getElementById('publisher').value = matchedPub.id;
+                }
+            }
+
+            // Copyright - try to match by pattern
+            if (vs.copyright) {
+                // Simple heuristic matching
+                if (vs.copyright.includes('SNOMED') && !vs.copyright.includes('LOINC')) {
+                    const snomed = copyrights.find(c => c.id === 'cc-by-snomed');
+                    if (snomed) document.getElementById('copyright').value = snomed.id;
+                } else if (vs.copyright.includes('LOINC')) {
+                    const loinc = copyrights.find(c => c.id === 'cc-by-loinc-hl7');
+                    if (loinc) document.getElementById('copyright').value = loinc.id;
+                } else {
+                    const simple = copyrights.find(c => c.id === 'cc-by-simple');
+                    if (simple) document.getElementById('copyright').value = simple.id;
+                }
+            }
+
+            // Compose section
+            if (vs.compose?.include?.[0]) {
+                const inc = vs.compose.include[0];
+
+                if (inc.valueSet) {
+                    // External ValueSet reference
+                    selectComposeType('valueSetRef');
+                    document.getElementById('valueSetRefUrl').value = inc.valueSet[0] || '';
+                } else if (inc.filter) {
+                    const filter = inc.filter[0];
+                    if (filter.property === 'constraint') {
+                        // ECL expression
+                        selectComposeType('ecl');
+                        document.getElementById('eclExpression').value = filter.value || '';
+                    } else {
+                        // Generic filter
+                        selectComposeType('filter');
+                        setFilterSystem(inc.system);
+                        document.getElementById('filterProperty').value = filter.property || 'concept';
+                        document.getElementById('filterOp').value = filter.op || '=';
+                        document.getElementById('filterValue').value = filter.value || '';
+                    }
+                } else if (inc.concept) {
+                    // Code list
+                    selectComposeType('codeList');
+                    setCodeSystem(inc.system);
+                    const codeText = inc.concept.map(c =>
+                        c.display ? `${c.code},${c.display}` : c.code
+                    ).join('\n');
+                    document.getElementById('codeListInput').value = codeText;
+                } else if (inc.system) {
+                    // Entire system
+                    selectComposeType('entireSystem');
+                    setEntireSystem(inc.system);
+                }
+            }
+
+            updatePreview();
+        }
+
+        function setCodeSystem(system) {
+            const select = document.getElementById('codeSystem');
+            const options = Array.from(select.options).map(o => o.value);
+            if (options.includes(system)) {
+                select.value = system;
+            } else {
+                select.value = 'custom';
+                document.getElementById('customCodeSystem').value = system;
+                document.getElementById('customCodeSystem').style.display = 'block';
+            }
+        }
+
+        function setFilterSystem(system) {
+            const select = document.getElementById('filterSystem');
+            const options = Array.from(select.options).map(o => o.value);
+            if (options.includes(system)) {
+                select.value = system;
+            } else {
+                select.value = 'custom';
+                document.getElementById('customFilterSystem').value = system;
+                document.getElementById('customFilterSystem').style.display = 'block';
+            }
+        }
+
+        function setEntireSystem(system) {
+            const select = document.getElementById('entireSystemSelect');
+            const options = Array.from(select.options).map(o => o.value);
+            if (options.includes(system)) {
+                select.value = system;
+            } else {
+                select.value = 'custom';
+                document.getElementById('entireSystemUrl').value = system;
+                document.getElementById('entireSystemUrl').style.display = 'block';
+            }
+        }
+
+        async function loadCodeListFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                document.getElementById('codeListInput').value = text;
+                updatePreview();
+                showNotification('Code list loaded!');
+            } catch (err) {
+                showNotification('Failed to read file', 'error');
+            }
+
+            event.target.value = '';
+        }
+
+        function clearForm() {
+            document.getElementById('title').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('narrativeText').value = '';
+            document.getElementById('version').value = '1.0.0';
+            document.getElementById('status').value = 'active';
+            document.getElementById('experimental').checked = false;
+            document.getElementById('identifier').value = '';
+            document.getElementById('publisher').value = '';
+            document.getElementById('copyright').value = '';
+            document.getElementById('codeListInput').value = '';
+            document.getElementById('eclExpression').value = '';
+            document.getElementById('filterProperty').value = 'concept';
+            document.getElementById('filterOp').value = '=';
+            document.getElementById('filterValue').value = '';
+            document.getElementById('valueSetRefUrl').value = '';
+            document.getElementById('loadedFileName').textContent = '';
+            document.getElementById('version').classList.remove('version-highlight');
+
+            setDefaultDate();
+            selectComposeType('codeList');
+            updatePreview();
+            showNotification('Form cleared');
+        }
+    </script>
+</body>
+</html>
