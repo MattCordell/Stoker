@@ -16,6 +16,37 @@
             --success: #22c55e;
             --warning: #f59e0b;
             --error: #ef4444;
+            --input-bg: #ffffff;
+            --json-bg: #1e293b;
+            --json-text: #e2e8f0;
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --input-bg: #0f172a;
+            --json-bg: #020617;
+            --json-text: #e2e8f0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --primary: #3b82f6;
+                --primary-dark: #2563eb;
+                --bg: #0f172a;
+                --card-bg: #1e293b;
+                --text: #f1f5f9;
+                --text-muted: #94a3b8;
+                --border: #334155;
+                --input-bg: #0f172a;
+                --json-bg: #020617;
+                --json-text: #e2e8f0;
+            }
         }
 
         * {
@@ -99,6 +130,8 @@
             border-radius: 4px;
             font-size: 0.875rem;
             font-family: inherit;
+            background: var(--input-bg);
+            color: var(--text);
         }
 
         input:focus,
@@ -230,8 +263,8 @@
         }
 
         .json-preview {
-            background: #1e293b;
-            color: #e2e8f0;
+            background: var(--json-bg);
+            color: var(--json-text);
             padding: 1rem;
             border-radius: 4px;
             font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
@@ -305,12 +338,65 @@
         .code-system-select {
             margin-bottom: 0.5rem;
         }
+
+        .header-row {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .theme-toggle button {
+            background: none;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .theme-toggle button:hover {
+            background: var(--border);
+        }
+
+        .theme-toggle button.active {
+            background: var(--primary);
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>FHIR ValueSet Creator</h1>
-        <p class="subtitle">Create FHIR R4 ValueSet resources for download</p>
+        <div class="header-row">
+            <div class="header-title">
+                <h1 style="margin-bottom: 0;">FHIR ValueSet Creator</h1>
+                <p class="subtitle" style="margin-bottom: 0;">Create FHIR R4 ValueSet resources for download</p>
+            </div>
+            <div class="theme-toggle">
+                <button id="theme-system" onclick="setTheme('system')" title="System">Auto</button>
+                <button id="theme-light" onclick="setTheme('light')" title="Light">☀️</button>
+                <button id="theme-dark" onclick="setTheme('dark')" title="Dark">🌙</button>
+            </div>
+        </div>
 
         <div class="load-section card">
             <input type="file" id="loadFile" accept=".json">
@@ -537,6 +623,40 @@
     <div id="notification" class="notification"></div>
 
     <script>
+        // Theme handling
+        function setTheme(theme) {
+            localStorage.setItem('theme', theme);
+            applyTheme(theme);
+            updateThemeButtons(theme);
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else if (theme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+        }
+
+        function updateThemeButtons(theme) {
+            document.querySelectorAll('.theme-toggle button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const activeBtn = document.getElementById(`theme-${theme}`);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('theme') || 'system';
+            applyTheme(saved);
+            updateThemeButtons(saved);
+        }
+
+        // Initialize theme immediately to prevent flash
+        initTheme();
+
         // Configuration data
         let publishers = [];
         let copyrights = [];
