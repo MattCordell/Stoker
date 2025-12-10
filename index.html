@@ -353,6 +353,12 @@
             flex-direction: column;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
         .theme-toggle {
             display: flex;
             align-items: center;
@@ -391,10 +397,15 @@
                 <h1 style="margin-bottom: 0;">FHIR ValueSet Creator</h1>
                 <p class="subtitle" style="margin-bottom: 0;">Create FHIR R4 ValueSet resources for download</p>
             </div>
-            <div class="theme-toggle">
-                <button id="theme-system" onclick="setTheme('system')" title="System">Auto</button>
-                <button id="theme-light" onclick="setTheme('light')" title="Light">☀️</button>
-                <button id="theme-dark" onclick="setTheme('dark')" title="Dark">🌙</button>
+            <div class="header-actions">
+                <a href="https://github.com/MattCordell/Stoker/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                    🐛 Report Bug
+                </a>
+                <div class="theme-toggle">
+                    <button id="theme-system" onclick="setTheme('system')" title="System">Auto</button>
+                    <button id="theme-light" onclick="setTheme('light')" title="Light">☀️</button>
+                    <button id="theme-dark" onclick="setTheme('dark')" title="Dark">🌙</button>
+                </div>
             </div>
         </div>
 
