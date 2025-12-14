@@ -798,7 +798,7 @@
             // Generate derived values
             const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
             const majorVersion = version.split('.')[0];
-            const id = `${kebabName}-${version}`;
+            const id = `${kebabName}-${majorVersion}`;
             const url = `https://healthterminologies.gov.au/fhir/ValueSet/${kebabName}-${majorVersion}`;
 
             // Build copyright with year substitution
