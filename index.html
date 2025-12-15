@@ -411,6 +411,94 @@
             background: var(--primary);
             color: white;
         }
+
+        .copyright-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-height: 40px;
+            padding: 0.5rem;
+            background: var(--bg);
+            border-radius: 4px;
+            border: 1px dashed var(--border);
+        }
+
+        .copyright-list:empty::before {
+            content: "No copyright notices added yet";
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-align: center;
+            display: block;
+            padding: 0.5rem;
+        }
+
+        .copyright-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: move;
+            transition: all 0.2s;
+        }
+
+        .copyright-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .copyright-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .copyright-item.drag-over {
+            border-top: 2px solid var(--primary);
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            padding: 0 0.25rem;
+            user-select: none;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .copyright-item-name {
+            flex: 1;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .copyright-item-category {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding: 0.125rem 0.5rem;
+            background: var(--bg);
+            border-radius: 3px;
+        }
+
+        .remove-copyright {
+            background: none;
+            border: none;
+            color: var(--error);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+
+        .remove-copyright:hover {
+            color: var(--primary-dark);
+            transform: scale(1.2);
+        }
     </style>
 </head>
 <body>
@@ -517,10 +605,19 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="copyright">Copyright Statement</label>
-                    <select id="copyright">
-                        <option value="">-- Select Copyright --</option>
-                    </select>
+                    <label for="copyright">Copyright Notices</label>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <select id="copyright" style="flex: 1;">
+                            <option value="">-- Select Copyright Notice to Add --</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary" onclick="addCopyrightNotice()" style="white-space: nowrap;">
+                            + Add
+                        </button>
+                    </div>
+                    <div id="copyrightList" class="copyright-list"></div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        Drag to reorder • Click × to remove
+                    </p>
                 </div>
             </div>
 
@@ -698,6 +795,7 @@
         // Configuration data
         let publishers = [];
         let copyrights = [];
+        let selectedCopyrights = []; // Array of copyright IDs in order
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
@@ -740,17 +838,202 @@
 
         function populateCopyrights() {
             const select = document.getElementById('copyright');
+
+            // Group by category
+            const byCategory = {
+                'base': [],
+                'third-party': [],
+                'footer': []
+            };
+
             copyrights.forEach(c => {
-                const option = document.createElement('option');
-                option.value = c.id;
-                option.textContent = c.name;
-                select.appendChild(option);
+                const category = c.category || 'third-party';
+                if (!byCategory[category]) byCategory[category] = [];
+                byCategory[category].push(c);
             });
+
+            // Add optgroups
+            if (byCategory.base.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = '📄 Base Copyright Headers';
+                byCategory.base.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.id;
+                    option.textContent = c.name;
+                    optgroup.appendChild(option);
+                });
+                select.appendChild(optgroup);
+            }
+
+            if (byCategory['third-party'].length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = '🏢 Third-Party Licenses';
+                byCategory['third-party'].forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.id;
+                    option.textContent = c.name;
+                    optgroup.appendChild(option);
+                });
+                select.appendChild(optgroup);
+            }
+
+            if (byCategory.footer.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = '📌 Footer Statements';
+                byCategory.footer.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.id;
+                    option.textContent = c.name;
+                    optgroup.appendChild(option);
+                });
+                select.appendChild(optgroup);
+            }
         }
 
         function setDefaultDate() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('date').value = today;
+        }
+
+        // Copyright list management
+        function addCopyrightNotice() {
+            const select = document.getElementById('copyright');
+            const copyrightId = select.value;
+
+            if (!copyrightId) {
+                showNotification('Please select a copyright notice to add', 'warning');
+                return;
+            }
+
+            // Check if already added
+            if (selectedCopyrights.includes(copyrightId)) {
+                showNotification('Copyright notice already added', 'warning');
+                return;
+            }
+
+            selectedCopyrights.push(copyrightId);
+            renderCopyrightList();
+            select.value = '';
+            updatePreview();
+        }
+
+        function removeCopyrightNotice(copyrightId) {
+            selectedCopyrights = selectedCopyrights.filter(id => id !== copyrightId);
+            renderCopyrightList();
+            updatePreview();
+        }
+
+        function moveCopyrightNotice(fromIndex, toIndex) {
+            const item = selectedCopyrights[fromIndex];
+            selectedCopyrights.splice(fromIndex, 1);
+            selectedCopyrights.splice(toIndex, 0, item);
+            renderCopyrightList();
+            updatePreview();
+        }
+
+        function renderCopyrightList() {
+            const container = document.getElementById('copyrightList');
+            container.innerHTML = '';
+
+            selectedCopyrights.forEach((copyrightId, index) => {
+                const copyright = copyrights.find(c => c.id === copyrightId);
+                if (!copyright) return;
+
+                const item = document.createElement('div');
+                item.className = 'copyright-item';
+                item.draggable = true;
+                item.dataset.index = index;
+                item.dataset.id = copyrightId;
+
+                // Drag handle
+                const handle = document.createElement('span');
+                handle.className = 'drag-handle';
+                handle.textContent = '☰';
+                handle.title = 'Drag to reorder';
+
+                // Name
+                const name = document.createElement('span');
+                name.className = 'copyright-item-name';
+                name.textContent = copyright.name;
+
+                // Category badge
+                const category = document.createElement('span');
+                category.className = 'copyright-item-category';
+                const categoryLabels = {
+                    'base': '📄',
+                    'third-party': '🏢',
+                    'footer': '📌'
+                };
+                category.textContent = categoryLabels[copyright.category] || '📄';
+                category.title = copyright.category || 'base';
+
+                // Remove button
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-copyright';
+                removeBtn.textContent = '×';
+                removeBtn.title = 'Remove';
+                removeBtn.onclick = () => removeCopyrightNotice(copyrightId);
+
+                item.appendChild(handle);
+                item.appendChild(name);
+                item.appendChild(category);
+                item.appendChild(removeBtn);
+
+                // Drag events
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+
+                container.appendChild(item);
+            });
+        }
+
+        // Drag and drop handlers
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            draggedElement = e.currentTarget;
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+
+            const targetElement = e.currentTarget;
+            if (targetElement !== draggedElement) {
+                targetElement.classList.add('drag-over');
+            }
+
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            const targetElement = e.currentTarget;
+            targetElement.classList.remove('drag-over');
+
+            if (draggedElement !== targetElement) {
+                const fromIndex = parseInt(draggedElement.dataset.index);
+                const toIndex = parseInt(targetElement.dataset.index);
+                moveCopyrightNotice(fromIndex, toIndex);
+            }
+
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.copyright-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
         }
 
         function setupEventListeners() {
@@ -891,8 +1174,6 @@
             // Publisher and copyright
             const publisherId = document.getElementById('publisher').value;
             const publisher = publishers.find(p => p.id === publisherId);
-            const copyrightId = document.getElementById('copyright').value;
-            const copyrightTemplate = copyrights.find(c => c.id === copyrightId);
 
             // Generate derived values
             const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
@@ -900,13 +1181,19 @@
             const id = `${kebabName}-${majorVersion}`;
             const url = `https://healthterminologies.gov.au/fhir/ValueSet/${kebabName}-${majorVersion}`;
 
-            // Build copyright with year substitution
+            // Build copyright from selected notices with " \n\n" separator (per authoring guide)
             let copyrightText = '';
-            if (copyrightTemplate) {
+            if (selectedCopyrights.length > 0) {
                 const currentYear = new Date().getFullYear();
-                copyrightText = copyrightTemplate.template
-                    .replace(/\{\{year\}\}/g, currentYear)
-                    .replace(/\{\{publisher\}\}/g, publisher?.name || '');
+                const copyrightParagraphs = selectedCopyrights.map(copyrightId => {
+                    const copyrightTemplate = copyrights.find(c => c.id === copyrightId);
+                    if (!copyrightTemplate) return '';
+                    return copyrightTemplate.template
+                        .replace(/\{\{year\}\}/g, currentYear)
+                        .replace(/\{\{publisher\}\}/g, publisher?.name || '');
+                }).filter(text => text.length > 0);
+
+                copyrightText = copyrightParagraphs.join(' \n\n');
             }
 
             // Build narrative
@@ -1220,19 +1507,44 @@
                 }
             }
 
-            // Copyright - try to match by pattern
+            // Copyright - parse and match paragraphs to templates
+            selectedCopyrights = [];
             if (vs.copyright) {
-                // Simple heuristic matching
-                if (vs.copyright.includes('SNOMED') && !vs.copyright.includes('LOINC')) {
-                    const snomed = copyrights.find(c => c.id === 'cc-by-snomed');
-                    if (snomed) document.getElementById('copyright').value = snomed.id;
-                } else if (vs.copyright.includes('LOINC')) {
-                    const loinc = copyrights.find(c => c.id === 'cc-by-loinc-hl7');
-                    if (loinc) document.getElementById('copyright').value = loinc.id;
-                } else {
-                    const simple = copyrights.find(c => c.id === 'cc-by-simple');
-                    if (simple) document.getElementById('copyright').value = simple.id;
-                }
+                // Split by " \n\n" (authoring guide separator)
+                const paragraphs = vs.copyright.split(' \n\n');
+
+                paragraphs.forEach(paragraph => {
+                    const trimmed = paragraph.trim();
+                    if (!trimmed) return;
+
+                    // Try to match paragraph to a template
+                    const matched = copyrights.find(c => {
+                        // Remove year and publisher placeholders for matching
+                        const template = c.template
+                            .replace(/\{\{year\}\}/g, '\\d{4}')
+                            .replace(/\{\{publisher\}\}/g, '.+?');
+
+                        // Create regex pattern (escape special chars except our placeholders)
+                        const pattern = template
+                            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                            .replace(/\\\\d\{4\}/g, '\\d{4}')
+                            .replace(/\\\.\+\?/g, '.+?');
+
+                        try {
+                            const regex = new RegExp(pattern.substring(0, 100)); // Match first 100 chars for performance
+                            return regex.test(trimmed.substring(0, 100));
+                        } catch (e) {
+                            // Fallback to simple string matching
+                            return trimmed.includes(c.template.substring(0, 50).replace(/\{\{year\}\}/g, '').replace(/\{\{publisher\}\}/g, ''));
+                        }
+                    });
+
+                    if (matched && !selectedCopyrights.includes(matched.id)) {
+                        selectedCopyrights.push(matched.id);
+                    }
+                });
+
+                renderCopyrightList();
             }
 
             // Compose section
@@ -1338,6 +1650,8 @@
             document.getElementById('identifier').value = '';
             document.getElementById('publisher').value = '';
             document.getElementById('copyright').value = '';
+            selectedCopyrights = [];
+            renderCopyrightList();
             document.getElementById('codeListInput').value = '';
             document.getElementById('eclExpression').value = '';
             document.getElementById('filterProperty').value = 'concept';
