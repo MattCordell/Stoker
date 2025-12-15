@@ -1,24 +1,70 @@
 {
   "copyrights": [
     {
-      "id": "cc-by-simple",
-      "name": "CC-BY 4.0 (Simple)",
+      "id": "cc-by-base",
+      "name": "CC-BY 4.0 Header",
+      "category": "base",
       "template": "Copyright © {{year}} {{publisher}} - All rights reserved. This content is licensed under a Creative Commons Attribution 4.0 International License. See https://creativecommons.org/licenses/by/4.0/."
     },
     {
-      "id": "cc-by-snomed",
-      "name": "CC-BY 4.0 + SNOMED CT License",
-      "template": "Copyright © {{year}} {{publisher}} - All rights reserved. Except for the material identified below, this content is licensed under a Creative Commons Attribution 4.0 International License. See https://creativecommons.org/licenses/by/4.0/.\n\nThis resource includes SNOMED Clinical Terms™ (SNOMED CT®) which is used by permission of the International Health Terminology Standards Development Organisation (IHTSDO). All rights reserved. SNOMED CT®, was originally created by The College of American Pathologists. \"SNOMED\" and \"SNOMED CT\" are registered trademarks of the IHTSDO.\n\nThe rights to use and implement or implementation of SNOMED CT content are limited to the extent it is necessary to allow for the end use of this material. No further rights are granted in respect of the International Release and no further use of any SNOMED CT content by any other party is permitted.\n\nAll copies of this resource must include this copyright statement and all information contained in this statement."
+      "id": "cc-by-except-base",
+      "name": "CC-BY 4.0 Header (with exceptions)",
+      "category": "base",
+      "template": "Copyright © {{year}} {{publisher}} - All rights reserved. Except for the material identified below, this content is licensed under a Creative Commons Attribution 4.0 International License. See https://creativecommons.org/licenses/by/4.0/."
     },
     {
-      "id": "cc-by-loinc-hl7",
-      "name": "CC-BY 4.0 + LOINC + HL7 License",
-      "template": "Copyright © {{year}} {{publisher}} - All rights reserved. Except for the material identified below, this content is licensed under a Creative Commons Attribution 4.0 International License. See https://creativecommons.org/licenses/by/4.0/.\n\nThis material contains content from LOINC (http://loinc.org). LOINC is copyright 1995-{{year}}, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc.\n\nThis material contains information which is protected by copyright. You may download, display, print and reproduce any material for your personal, non-commercial use or use within your organisation subject to the following terms and conditions:\n\nThis resource also includes all or a portion of material from the HL7 Terminology (THO). THO is copyright ©1989+ Health Level Seven International and is made available under the CC0 designation. For more licensing information see: https://terminology.hl7.org/license."
+      "id": "aihw-material",
+      "name": "AIHW Material Notice",
+      "category": "third-party",
+      "template": "This resource includes material that is based on Australian Institute of Health and Welfare material."
     },
     {
-      "id": "rcpa-snomed",
-      "name": "RCPA + SNOMED CT License",
-      "template": "Copyright © {{year}} The Royal College of Pathologists of Australasia (RCPA).\n\nThis resource includes SNOMED Clinical Terms™ (SNOMED CT®) which is used by permission of the International Health Terminology Standards Development Organisation (IHTSDO). All rights reserved. SNOMED CT®, was originally created by The College of American Pathologists. \"SNOMED\" and \"SNOMED CT\" are registered trademarks of the IHTSDO.\n\nThe rights to use and implement or implementation of SNOMED CT content are limited to the extent it is necessary to allow for the end use of this material. No further rights are granted in respect of the International Release and no further use of any SNOMED CT content by any other party is permitted.\n\nAll copies of this resource must include this copyright statement and all information contained in this statement."
+      "id": "abs-material",
+      "name": "ABS Material Notice",
+      "category": "third-party",
+      "template": "This resource includes material that is based on Australian Bureau of Statistics data."
+    },
+    {
+      "id": "meteor-material",
+      "name": "METeOR Metadata Notice",
+      "category": "third-party",
+      "template": "This resource includes material that is based on METeOR (Metadata Online Registry) metadata."
+    },
+    {
+      "id": "snomed-ct-license",
+      "name": "SNOMED CT License",
+      "category": "third-party",
+      "template": "This resource includes SNOMED Clinical Terms™ (SNOMED CT®) which is used by permission of the International Health Terminology Standards Development Organisation (IHTSDO). All rights reserved. SNOMED CT®, was originally created by The College of American Pathologists. \"SNOMED\" and \"SNOMED CT\" are registered trademarks of the IHTSDO. \n\nThe rights to use and implement or implementation of SNOMED CT content are limited to the extent it is necessary to allow for the end use of this material. No further rights are granted in respect of the International Release and no further use of any SNOMED CT content by any other party is permitted."
+    },
+    {
+      "id": "loinc-license",
+      "name": "LOINC License",
+      "category": "third-party",
+      "template": "This material contains content from LOINC (http://loinc.org). LOINC is copyright 1995-{{year}}, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc."
+    },
+    {
+      "id": "hl7-tho-license",
+      "name": "HL7 Terminology (THO) License",
+      "category": "third-party",
+      "template": "This resource also includes all or a portion of material from the HL7 Terminology (THO). THO is copyright ©1989+ Health Level Seven International and is made available under the CC0 designation. For more licensing information see: https://terminology.hl7.org/license."
+    },
+    {
+      "id": "ucum-license",
+      "name": "UCUM License",
+      "category": "third-party",
+      "template": "This material contains content from UCUM (http://unitsofmeasure.org). The Unified Code for Units of Measure (UCUM) is copyright ©1999-{{year}}, Regenstrief Institute, Inc. All rights reserved."
+    },
+    {
+      "id": "copyright-statement-footer",
+      "name": "Copyright Statement Footer",
+      "category": "footer",
+      "template": "All copies of this resource must include this copyright statement and all information contained in this statement."
+    },
+    {
+      "id": "rcpa-base",
+      "name": "RCPA Copyright Header",
+      "category": "base",
+      "template": "Copyright © {{year}} The Royal College of Pathologists of Australasia (RCPA)."
     }
   ]
 }
