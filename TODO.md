@@ -8,13 +8,15 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
 
 ### Accessibility Improvements
 
-- [ ] **Add ARIA labels to emoji buttons** ([#15](https://github.com/MattCordell/Stoker/issues/15)) (index.html:832-833)
+- [x] **Add ARIA labels to emoji buttons** ([#15](https://github.com/MattCordell/Stoker/issues/15)) (index.html:832-833)
   - Add `aria-label` attributes to theme toggle buttons (☀️ and 🌙)
   - Ensures screen readers can identify button purposes
+  - **Completed**: Comprehensive implementation including all emoji buttons, validation button dynamic updates, remove buttons, drag handles, and Report Bug link
 
-- [ ] **Add modal accessibility attributes** ([#16](https://github.com/MattCordell/Stoker/issues/16)) (index.html:1012)
+- [x] **Add modal accessibility attributes** ([#16](https://github.com/MattCordell/Stoker/issues/16)) (index.html:1012)
   - Add `role="dialog"`, `aria-modal="true"`, and `aria-labelledby` to include editor modal
   - Add same attributes to validation report modal
+  - **Completed**: Both modals now fully accessible with proper ARIA attributes
 
 - [ ] **Implement focus management for modals** ([#17](https://github.com/MattCordell/Stoker/issues/17))
   - Trap focus within modals when open
