@@ -824,13 +824,13 @@
                 <p class="subtitle" style="margin-bottom: 0;">Create FHIR R4 ValueSet resources for download</p>
             </div>
             <div class="header-actions">
-                <a href="https://github.com/MattCordell/Stoker/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                <a href="https://github.com/MattCordell/Stoker/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" aria-label="Report bug on GitHub (opens in new tab)">
                     🐛 Report Bug
                 </a>
                 <div class="theme-toggle">
-                    <button id="theme-system" onclick="setTheme('system')" title="System">Auto</button>
-                    <button id="theme-light" onclick="setTheme('light')" title="Light">☀️</button>
-                    <button id="theme-dark" onclick="setTheme('dark')" title="Dark">🌙</button>
+                    <button id="theme-system" onclick="setTheme('system')" title="System" aria-label="System theme">Auto</button>
+                    <button id="theme-light" onclick="setTheme('light')" title="Light" aria-label="Light theme">☀️</button>
+                    <button id="theme-dark" onclick="setTheme('dark')" title="Dark" aria-label="Dark theme">🌙</button>
                 </div>
             </div>
         </div>
@@ -999,7 +999,7 @@
                 <div class="output-actions">
                     <button class="btn btn-primary" onclick="downloadJSON()">Download JSON</button>
                     <button class="btn btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
-                    <button id="validateBtn" class="btn btn-info" onclick="showValidationReport()">
+                    <button id="validateBtn" class="btn btn-info" onclick="showValidationReport()" aria-label="Validate ValueSet">
                         <span id="validateIcon">✓</span> Validate
                         <span id="validationBadge" class="validation-badge" style="display: none;"></span>
                     </button>
@@ -1011,10 +1011,10 @@
     <!-- Include Block Editor Modal -->
     <div id="includeEditorModal" class="modal" style="display: none;">
         <div class="modal-overlay" onclick="closeIncludeEditor()"></div>
-        <div class="modal-content">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="includeEditorTitle">
             <div class="modal-header">
                 <h3 id="includeEditorTitle">Add Include Block</h3>
-                <button class="modal-close" onclick="closeIncludeEditor()">&times;</button>
+                <button class="modal-close" onclick="closeIncludeEditor()" aria-label="Close dialog" title="Close">&times;</button>
             </div>
             <div class="modal-body">
                 <div id="includeEditorContent">
@@ -1119,10 +1119,10 @@
     <!-- Validation Report Modal -->
     <div id="validationReportModal" class="modal" style="display: none;">
         <div class="modal-overlay" onclick="closeValidationReport()"></div>
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="validationReportTitle" style="max-width: 700px;">
             <div class="modal-header">
-                <h3>NCTS Validation Report</h3>
-                <button class="modal-close" onclick="closeValidationReport()">&times;</button>
+                <h3 id="validationReportTitle">NCTS Validation Report</h3>
+                <button class="modal-close" onclick="closeValidationReport()" aria-label="Close dialog" title="Close">&times;</button>
             </div>
             <div class="modal-body" id="validationReportBody">
                 <!-- Validation report content will be inserted here -->
@@ -1333,6 +1333,7 @@
                 handle.className = 'drag-handle';
                 handle.textContent = '☰';
                 handle.title = 'Drag to reorder';
+                handle.setAttribute('aria-label', 'Drag to reorder');
 
                 // Name
                 const name = document.createElement('span');
@@ -1355,6 +1356,7 @@
                 removeBtn.className = 'remove-copyright';
                 removeBtn.textContent = '×';
                 removeBtn.title = 'Remove';
+                removeBtn.setAttribute('aria-label', 'Remove copyright notice');
                 removeBtn.onclick = () => removeCopyrightNotice(copyrightId);
 
                 item.appendChild(handle);
@@ -1674,6 +1676,7 @@
                 handle.className = 'drag-handle';
                 handle.textContent = '☰';
                 handle.title = 'Drag to reorder';
+                handle.setAttribute('aria-label', 'Drag to reorder');
 
                 // Content
                 const content = document.createElement('div');
@@ -1701,6 +1704,7 @@
                 removeBtn.className = 'remove-include';
                 removeBtn.textContent = '×';
                 removeBtn.title = 'Remove';
+                removeBtn.setAttribute('aria-label', 'Remove include block');
                 removeBtn.onclick = () => removeIncludeBlock(include.id);
 
                 item.appendChild(handle);
@@ -2267,6 +2271,7 @@
             const results = validateValueSet();
             const badge = document.getElementById('validationBadge');
             const icon = document.getElementById('validateIcon');
+            const validateBtn = document.getElementById('validateBtn');
             const totalIssues = results.errors.length + results.warnings.length;
 
             if (totalIssues > 0) {
@@ -2276,13 +2281,16 @@
                 if (results.errors.length > 0) {
                     badge.classList.remove('warning-only');
                     icon.textContent = '✗';
+                    validateBtn.setAttribute('aria-label', `Validate ValueSet - ${results.errors.length} error${results.errors.length > 1 ? 's' : ''} found`);
                 } else {
                     badge.classList.add('warning-only');
                     icon.textContent = '⚠';
+                    validateBtn.setAttribute('aria-label', `Validate ValueSet - ${results.warnings.length} warning${results.warnings.length > 1 ? 's' : ''} found`);
                 }
             } else {
                 badge.style.display = 'none';
                 icon.textContent = '✓';
+                validateBtn.setAttribute('aria-label', 'Validate ValueSet - No issues');
             }
         }
 
