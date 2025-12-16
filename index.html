@@ -499,6 +499,180 @@
             color: var(--primary-dark);
             transform: scale(1.2);
         }
+
+        /* Include blocks list */
+        .include-blocks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-height: 60px;
+            padding: 0.5rem;
+            background: var(--bg);
+            border-radius: 4px;
+            border: 1px dashed var(--border);
+        }
+
+        .include-blocks-list:empty::before {
+            content: "No include blocks added yet";
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-align: center;
+            display: block;
+            padding: 1rem;
+        }
+
+        .include-block-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: move;
+            transition: all 0.2s;
+        }
+
+        .include-block-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .include-block-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .include-block-item.drag-over {
+            border-top: 2px solid var(--primary);
+        }
+
+        .include-block-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .include-block-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text);
+        }
+
+        .include-block-summary {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .include-block-badge {
+            padding: 0.25rem 0.5rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .include-block-badge:hover {
+            background: var(--primary-dark);
+        }
+
+        .remove-include {
+            background: none;
+            border: none;
+            color: var(--error);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+
+        .remove-include:hover {
+            color: var(--primary-dark);
+            transform: scale(1.2);
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--card-bg);
+            border-radius: 8px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--text);
+        }
     </style>
 </head>
 <body>
@@ -622,12 +796,34 @@
             </div>
 
             <div class="card" style="margin-top: 1rem;">
-                <h2>Compose</h2>
+                <h2>Compose - Include Blocks</h2>
                 <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
-                    Choose how to define the contents of this ValueSet
+                    Add one or more include blocks to define the ValueSet contents
                 </p>
 
-                <div class="radio-group">
+                <!-- Add Include Interface -->
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <select id="includeTypeSelect" style="flex: 1;">
+                        <option value="">-- Select Include Type --</option>
+                        <option value="codeList">Code List (explicit codes)</option>
+                        <option value="ecl">SNOMED CT ECL Expression</option>
+                        <option value="filter">FHIR Filter</option>
+                        <option value="valueSetRef">Reference External ValueSet</option>
+                        <option value="entireSystem">Include Entire CodeSystem</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary" onclick="startAddingInclude()" style="white-space: nowrap;">
+                        + Add Include
+                    </button>
+                </div>
+
+                <!-- Include Blocks List -->
+                <div id="includeBlocksList" class="include-blocks-list"></div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    Drag to reorder • Click badge to edit • Click × to remove
+                </p>
+
+                <!-- Hidden radio group for modal use -->
+                <div class="radio-group" style="display: none;">
                     <label class="radio-option" onclick="selectComposeType('codeList')">
                         <input type="radio" name="composeType" value="codeList" checked>
                         <span>Code List (explicit codes)</span>
@@ -650,94 +846,6 @@
                     </label>
                 </div>
 
-                <div id="compose-codeList" class="compose-content active">
-                    <div class="form-group">
-                        <label for="codeSystem">Code System</label>
-                        <select id="codeSystem" class="code-system-select">
-                            <option value="http://snomed.info/sct">SNOMED CT (http://snomed.info/sct)</option>
-                            <option value="http://loinc.org">LOINC (http://loinc.org)</option>
-                            <option value="http://terminology.hl7.org/CodeSystem/data-absent-reason">HL7 Data Absent Reason</option>
-                            <option value="custom">Custom System URL...</option>
-                        </select>
-                        <input type="text" id="customCodeSystem" placeholder="Enter custom code system URL" style="margin-top: 0.5rem; display: none;">
-                    </div>
-                    <div class="form-group">
-                        <label for="codeListInput">Codes <span class="label-hint">(one per line, or code,display format)</span></label>
-                        <textarea id="codeListInput" class="code-list-input" placeholder="281647001&#10;419076005&#10;or&#10;281647001,Adverse reaction&#10;419076005,Allergic reaction"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <input type="file" id="codeListFile" accept=".csv,.txt" style="display: none;">
-                        <button class="btn btn-secondary" onclick="document.getElementById('codeListFile').click()">
-                            Upload Code List File
-                        </button>
-                    </div>
-                </div>
-
-                <div id="compose-ecl" class="compose-content">
-                    <div class="form-group">
-                        <label for="eclExpression">ECL Expression</label>
-                        <textarea id="eclExpression" class="code-list-input" placeholder="e.g., < 394658006|Clinical specialty|&#10;or&#10;^ 32570211000036100 |Substance foundation reference set|"></textarea>
-                    </div>
-                </div>
-
-                <div id="compose-filter" class="compose-content">
-                    <div class="form-group">
-                        <label for="filterSystem">Code System</label>
-                        <select id="filterSystem">
-                            <option value="http://snomed.info/sct">SNOMED CT (http://snomed.info/sct)</option>
-                            <option value="http://loinc.org">LOINC (http://loinc.org)</option>
-                            <option value="custom">Custom System URL...</option>
-                        </select>
-                        <input type="text" id="customFilterSystem" placeholder="Enter custom code system URL" style="margin-top: 0.5rem; display: none;">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="filterProperty">Property</label>
-                            <select id="filterProperty">
-                                <option value="concept">concept</option>
-                                <option value="constraint">constraint</option>
-                                <option value="code">code</option>
-                                <option value="display">display</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="filterOp">Operator</label>
-                            <select id="filterOp">
-                                <option value="=">=</option>
-                                <option value="in">in</option>
-                                <option value="not-in">not-in</option>
-                                <option value="is-a">is-a</option>
-                                <option value="descendent-of">descendent-of</option>
-                                <option value="is-not-a">is-not-a</option>
-                                <option value="regex">regex</option>
-                                <option value="exists">exists</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="filterValue">Value</label>
-                        <input type="text" id="filterValue" placeholder="e.g., 142341000036103">
-                    </div>
-                </div>
-
-                <div id="compose-valueSetRef" class="compose-content">
-                    <div class="form-group">
-                        <label for="valueSetRefUrl">External ValueSet URL</label>
-                        <input type="text" id="valueSetRefUrl" placeholder="e.g., http://snomed.info/sct/32506021000036107?fhir_vs=refset/1072351000168102">
-                    </div>
-                </div>
-
-                <div id="compose-entireSystem" class="compose-content">
-                    <div class="form-group">
-                        <label for="entireSystemUrl">Code System URL</label>
-                        <select id="entireSystemSelect">
-                            <option value="http://snomed.info/sct">SNOMED CT (http://snomed.info/sct)</option>
-                            <option value="http://loinc.org">LOINC (http://loinc.org)</option>
-                            <option value="custom">Custom System URL...</option>
-                        </select>
-                        <input type="text" id="entireSystemUrl" placeholder="Enter code system URL" style="margin-top: 0.5rem; display: none;">
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -751,6 +859,114 @@
                     <button class="btn btn-primary" onclick="downloadJSON()">Download JSON</button>
                     <button class="btn btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Block Editor Modal -->
+    <div id="includeEditorModal" class="modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeIncludeEditor()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="includeEditorTitle">Add Include Block</h3>
+                <button class="modal-close" onclick="closeIncludeEditor()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="includeEditorContent">
+                    <!-- The compose content sections will be shown here -->
+                    <div id="modal-compose-codeList" class="compose-content">
+                        <div class="form-group">
+                            <label for="modalCodeSystem">Code System</label>
+                            <select id="modalCodeSystem" class="code-system-select">
+                                <option value="http://snomed.info/sct">SNOMED CT (http://snomed.info/sct)</option>
+                                <option value="http://loinc.org">LOINC (http://loinc.org)</option>
+                                <option value="http://terminology.hl7.org/CodeSystem/data-absent-reason">HL7 Data Absent Reason</option>
+                                <option value="custom">Custom System URL...</option>
+                            </select>
+                            <input type="text" id="modalCustomCodeSystem" placeholder="Enter custom code system URL" style="margin-top: 0.5rem; display: none;">
+                        </div>
+                        <div class="form-group">
+                            <label for="modalCodeListInput">Codes <span class="label-hint">(one per line, or code,display format)</span></label>
+                            <textarea id="modalCodeListInput" class="code-list-input" placeholder="281647001&#10;419076005&#10;or&#10;281647001,Adverse reaction&#10;419076005,Allergic reaction"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <input type="file" id="modalCodeListFile" accept=".csv,.txt" style="display: none;">
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('modalCodeListFile').click()">
+                                Upload Code List File
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="modal-compose-ecl" class="compose-content">
+                        <div class="form-group">
+                            <label for="modalEclExpression">ECL Expression</label>
+                            <textarea id="modalEclExpression" class="code-list-input" placeholder="e.g., < 394658006|Clinical specialty|&#10;or&#10;^ 32570211000036100 |Substance foundation reference set|"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="modal-compose-filter" class="compose-content">
+                        <div class="form-group">
+                            <label for="modalFilterSystem">Code System</label>
+                            <select id="modalFilterSystem">
+                                <option value="http://snomed.info/sct">SNOMED CT (http://snomed.info/sct)</option>
+                                <option value="http://loinc.org">LOINC (http://loinc.org)</option>
+                                <option value="custom">Custom System URL...</option>
+                            </select>
+                            <input type="text" id="modalCustomFilterSystem" placeholder="Enter custom code system URL" style="margin-top: 0.5rem; display: none;">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="modalFilterProperty">Property</label>
+                                <select id="modalFilterProperty">
+                                    <option value="concept">concept</option>
+                                    <option value="constraint">constraint</option>
+                                    <option value="code">code</option>
+                                    <option value="display">display</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="modalFilterOp">Operator</label>
+                                <select id="modalFilterOp">
+                                    <option value="=">=</option>
+                                    <option value="in">in</option>
+                                    <option value="not-in">not-in</option>
+                                    <option value="is-a">is-a</option>
+                                    <option value="descendent-of">descendent-of</option>
+                                    <option value="is-not-a">is-not-a</option>
+                                    <option value="regex">regex</option>
+                                    <option value="exists">exists</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="modalFilterValue">Value</label>
+                            <input type="text" id="modalFilterValue" placeholder="e.g., 142341000036103">
+                        </div>
+                    </div>
+
+                    <div id="modal-compose-valueSetRef" class="compose-content">
+                        <div class="form-group">
+                            <label for="modalValueSetRefUrl">External ValueSet URL</label>
+                            <input type="text" id="modalValueSetRefUrl" placeholder="e.g., http://snomed.info/sct/32506021000036107?fhir_vs=refset/1072351000168102">
+                        </div>
+                    </div>
+
+                    <div id="modal-compose-entireSystem" class="compose-content">
+                        <div class="form-group">
+                            <label for="modalEntireSystemUrl">Code System URL</label>
+                            <select id="modalEntireSystemSelect">
+                                <option value="http://snomed.info/sct">SNOMED CT (http://snomed.info/sct)</option>
+                                <option value="http://loinc.org">LOINC (http://loinc.org)</option>
+                                <option value="custom">Custom System URL...</option>
+                            </select>
+                            <input type="text" id="modalEntireSystemUrl" placeholder="Enter code system URL" style="margin-top: 0.5rem; display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeIncludeEditor()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveIncludeBlock()">Save Include</button>
             </div>
         </div>
     </div>
@@ -796,6 +1012,10 @@
         let publishers = [];
         let copyrights = [];
         let selectedCopyrights = []; // Array of copyright IDs in order
+
+        // Include blocks management
+        let includeBlocks = []; // Array of include configuration objects
+        let currentEditingIncludeId = null; // ID of include being edited in modal
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
@@ -1036,6 +1256,381 @@
             });
         }
 
+        // Include block management functions
+        function startAddingInclude() {
+            const typeSelect = document.getElementById('includeTypeSelect');
+            const type = typeSelect.value;
+
+            if (!type) {
+                showNotification('Please select an include type', 'warning');
+                return;
+            }
+
+            currentEditingIncludeId = null;
+            openIncludeEditor(type);
+            typeSelect.value = '';
+        }
+
+        function openIncludeEditor(type, includeId = null) {
+            const modal = document.getElementById('includeEditorModal');
+            const title = document.getElementById('includeEditorTitle');
+
+            if (includeId) {
+                currentEditingIncludeId = includeId;
+                const include = includeBlocks.find(i => i.id === includeId);
+                title.textContent = `Edit ${getIncludeTypeName(include.type)} Include`;
+
+                // Populate form with existing data
+                populateIncludeEditor(include);
+            } else {
+                currentEditingIncludeId = null;
+                title.textContent = `Add ${getIncludeTypeName(type)} Include`;
+
+                // Clear form
+                clearIncludeEditorForms();
+            }
+
+            // Show the appropriate compose content section
+            showModalComposeSection(type);
+
+            modal.style.display = 'flex';
+        }
+
+        function showModalComposeSection(type) {
+            // Hide all modal compose sections
+            document.querySelectorAll('[id^="modal-compose-"]').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Show the selected one
+            const section = document.getElementById(`modal-compose-${type}`);
+            if (section) {
+                section.classList.add('active');
+            }
+        }
+
+        function closeIncludeEditor() {
+            const modal = document.getElementById('includeEditorModal');
+            modal.style.display = 'none';
+            currentEditingIncludeId = null;
+            clearIncludeEditorForms();
+        }
+
+        function saveIncludeBlock() {
+            // Determine which compose section is active in the modal
+            const activeSection = document.querySelector('[id^="modal-compose-"].active');
+            if (!activeSection) {
+                showNotification('Please select an include type', 'warning');
+                return;
+            }
+
+            const type = activeSection.id.replace('modal-compose-', '');
+            const data = extractIncludeData(type);
+
+            if (!data) {
+                showNotification('Please fill in the required fields', 'warning');
+                return;
+            }
+
+            if (currentEditingIncludeId) {
+                // Update existing include
+                const index = includeBlocks.findIndex(i => i.id === currentEditingIncludeId);
+                includeBlocks[index] = {
+                    id: currentEditingIncludeId,
+                    type: type,
+                    data: data
+                };
+            } else {
+                // Add new include
+                includeBlocks.push({
+                    id: 'include-' + Date.now(),
+                    type: type,
+                    data: data
+                });
+            }
+
+            renderIncludeBlocksList();
+            closeIncludeEditor();
+            updatePreview();
+        }
+
+        function extractIncludeData(type) {
+            // Extract data from modal form based on type
+            switch (type) {
+                case 'codeList': {
+                    let system = document.getElementById('modalCodeSystem').value;
+                    if (system === 'custom') {
+                        system = document.getElementById('modalCustomCodeSystem').value;
+                    }
+                    if (!system) return null;
+                    const codes = parseCodeList(document.getElementById('modalCodeListInput').value);
+                    return { system, codes };
+                }
+                case 'ecl': {
+                    const expression = document.getElementById('modalEclExpression').value;
+                    return expression ? { expression } : null;
+                }
+                case 'filter': {
+                    let system = document.getElementById('modalFilterSystem').value;
+                    if (system === 'custom') {
+                        system = document.getElementById('modalCustomFilterSystem').value;
+                    }
+                    if (!system) return null;
+                    return {
+                        system,
+                        property: document.getElementById('modalFilterProperty').value,
+                        op: document.getElementById('modalFilterOp').value,
+                        value: document.getElementById('modalFilterValue').value
+                    };
+                }
+                case 'valueSetRef': {
+                    const url = document.getElementById('modalValueSetRefUrl').value;
+                    return url ? { url } : null;
+                }
+                case 'entireSystem': {
+                    let system = document.getElementById('modalEntireSystemSelect').value;
+                    if (system === 'custom') {
+                        system = document.getElementById('modalEntireSystemUrl').value;
+                    }
+                    return system ? { system } : null;
+                }
+            }
+            return null;
+        }
+
+        function populateIncludeEditor(include) {
+            // Populate form fields based on include type and data
+            const { type, data } = include;
+
+            switch (type) {
+                case 'codeList':
+                    setModalCodeSystem(data.system);
+                    const codeText = data.codes.map(c =>
+                        c.display ? `${c.code},${c.display}` : c.code
+                    ).join('\n');
+                    document.getElementById('modalCodeListInput').value = codeText;
+                    break;
+                case 'ecl':
+                    document.getElementById('modalEclExpression').value = data.expression;
+                    break;
+                case 'filter':
+                    setModalFilterSystem(data.system);
+                    document.getElementById('modalFilterProperty').value = data.property;
+                    document.getElementById('modalFilterOp').value = data.op;
+                    document.getElementById('modalFilterValue').value = data.value;
+                    break;
+                case 'valueSetRef':
+                    document.getElementById('modalValueSetRefUrl').value = data.url;
+                    break;
+                case 'entireSystem':
+                    setModalEntireSystem(data.system);
+                    break;
+            }
+
+            showModalComposeSection(type);
+        }
+
+        function setModalCodeSystem(system) {
+            const select = document.getElementById('modalCodeSystem');
+            const options = Array.from(select.options).map(o => o.value);
+            if (options.includes(system)) {
+                select.value = system;
+            } else {
+                select.value = 'custom';
+                document.getElementById('modalCustomCodeSystem').value = system;
+                document.getElementById('modalCustomCodeSystem').style.display = 'block';
+            }
+        }
+
+        function setModalFilterSystem(system) {
+            const select = document.getElementById('modalFilterSystem');
+            const options = Array.from(select.options).map(o => o.value);
+            if (options.includes(system)) {
+                select.value = system;
+            } else {
+                select.value = 'custom';
+                document.getElementById('modalCustomFilterSystem').value = system;
+                document.getElementById('modalCustomFilterSystem').style.display = 'block';
+            }
+        }
+
+        function setModalEntireSystem(system) {
+            const select = document.getElementById('modalEntireSystemSelect');
+            const options = Array.from(select.options).map(o => o.value);
+            if (options.includes(system)) {
+                select.value = system;
+            } else {
+                select.value = 'custom';
+                document.getElementById('modalEntireSystemUrl').value = system;
+                document.getElementById('modalEntireSystemUrl').style.display = 'block';
+            }
+        }
+
+        function clearIncludeEditorForms() {
+            document.getElementById('modalCodeListInput').value = '';
+            document.getElementById('modalEclExpression').value = '';
+            document.getElementById('modalFilterProperty').value = 'concept';
+            document.getElementById('modalFilterOp').value = '=';
+            document.getElementById('modalFilterValue').value = '';
+            document.getElementById('modalValueSetRefUrl').value = '';
+            document.getElementById('modalCodeSystem').value = 'http://snomed.info/sct';
+            document.getElementById('modalFilterSystem').value = 'http://snomed.info/sct';
+            document.getElementById('modalEntireSystemSelect').value = 'http://snomed.info/sct';
+            document.getElementById('modalCustomCodeSystem').style.display = 'none';
+            document.getElementById('modalCustomFilterSystem').style.display = 'none';
+            document.getElementById('modalEntireSystemUrl').style.display = 'none';
+        }
+
+        function removeIncludeBlock(includeId) {
+            includeBlocks = includeBlocks.filter(i => i.id !== includeId);
+            renderIncludeBlocksList();
+            updatePreview();
+        }
+
+        function moveIncludeBlock(fromIndex, toIndex) {
+            const item = includeBlocks[fromIndex];
+            includeBlocks.splice(fromIndex, 1);
+            includeBlocks.splice(toIndex, 0, item);
+            renderIncludeBlocksList();
+            updatePreview();
+        }
+
+        function renderIncludeBlocksList() {
+            const container = document.getElementById('includeBlocksList');
+            container.innerHTML = '';
+
+            includeBlocks.forEach((include, index) => {
+                const item = document.createElement('div');
+                item.className = 'include-block-item';
+                item.draggable = true;
+                item.dataset.index = index;
+                item.dataset.id = include.id;
+
+                // Drag handle
+                const handle = document.createElement('span');
+                handle.className = 'drag-handle';
+                handle.textContent = '☰';
+                handle.title = 'Drag to reorder';
+
+                // Content
+                const content = document.createElement('div');
+                content.className = 'include-block-content';
+
+                const title = document.createElement('div');
+                title.className = 'include-block-title';
+                title.textContent = getIncludeTypeName(include.type);
+
+                const summary = document.createElement('div');
+                summary.className = 'include-block-summary';
+                summary.textContent = getIncludeSummary(include);
+
+                content.appendChild(title);
+                content.appendChild(summary);
+
+                // Edit badge
+                const badge = document.createElement('span');
+                badge.className = 'include-block-badge';
+                badge.textContent = 'Edit';
+                badge.onclick = () => openIncludeEditor(include.type, include.id);
+
+                // Remove button
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-include';
+                removeBtn.textContent = '×';
+                removeBtn.title = 'Remove';
+                removeBtn.onclick = () => removeIncludeBlock(include.id);
+
+                item.appendChild(handle);
+                item.appendChild(content);
+                item.appendChild(badge);
+                item.appendChild(removeBtn);
+
+                // Drag events
+                item.addEventListener('dragstart', handleIncludeDragStart);
+                item.addEventListener('dragover', handleIncludeDragOver);
+                item.addEventListener('drop', handleIncludeDrop);
+                item.addEventListener('dragend', handleIncludeDragEnd);
+
+                container.appendChild(item);
+            });
+        }
+
+        function getIncludeTypeName(type) {
+            const names = {
+                codeList: 'Code List',
+                ecl: 'SNOMED CT ECL Expression',
+                filter: 'FHIR Filter',
+                valueSetRef: 'External ValueSet Reference',
+                entireSystem: 'Entire CodeSystem'
+            };
+            return names[type] || type;
+        }
+
+        function getIncludeSummary(include) {
+            const { type, data } = include;
+
+            switch (type) {
+                case 'codeList':
+                    return `${data.system} - ${data.codes.length} code(s)`;
+                case 'ecl':
+                    return `constraint = ${data.expression.substring(0, 50)}${data.expression.length > 50 ? '...' : ''}`;
+                case 'filter':
+                    return `${data.system} | ${data.property} ${data.op} ${data.value}`;
+                case 'valueSetRef':
+                    return data.url;
+                case 'entireSystem':
+                    return data.system;
+            }
+            return '';
+        }
+
+        // Drag handlers for include blocks
+        let draggedIncludeElement = null;
+
+        function handleIncludeDragStart(e) {
+            draggedIncludeElement = e.currentTarget;
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleIncludeDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+
+            const targetElement = e.currentTarget;
+            if (targetElement !== draggedIncludeElement) {
+                targetElement.classList.add('drag-over');
+            }
+
+            return false;
+        }
+
+        function handleIncludeDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            const targetElement = e.currentTarget;
+            targetElement.classList.remove('drag-over');
+
+            if (draggedIncludeElement !== targetElement) {
+                const fromIndex = parseInt(draggedIncludeElement.dataset.index);
+                const toIndex = parseInt(targetElement.dataset.index);
+                moveIncludeBlock(fromIndex, toIndex);
+            }
+
+            return false;
+        }
+
+        function handleIncludeDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.include-block-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+        }
+
         function setupEventListeners() {
             // Update preview on any input change
             document.querySelectorAll('input, textarea, select').forEach(el => {
@@ -1045,19 +1640,19 @@
 
             // File upload handlers
             document.getElementById('loadFile').addEventListener('change', loadExistingValueSet);
-            document.getElementById('codeListFile').addEventListener('change', loadCodeListFile);
+            document.getElementById('modalCodeListFile').addEventListener('change', loadCodeListFile);
 
-            // Custom code system toggles
-            document.getElementById('codeSystem').addEventListener('change', (e) => {
-                document.getElementById('customCodeSystem').style.display =
+            // Modal custom code system toggles
+            document.getElementById('modalCodeSystem').addEventListener('change', (e) => {
+                document.getElementById('modalCustomCodeSystem').style.display =
                     e.target.value === 'custom' ? 'block' : 'none';
             });
-            document.getElementById('filterSystem').addEventListener('change', (e) => {
-                document.getElementById('customFilterSystem').style.display =
+            document.getElementById('modalFilterSystem').addEventListener('change', (e) => {
+                document.getElementById('modalCustomFilterSystem').style.display =
                     e.target.value === 'custom' ? 'block' : 'none';
             });
-            document.getElementById('entireSystemSelect').addEventListener('change', (e) => {
-                document.getElementById('entireSystemUrl').style.display =
+            document.getElementById('modalEntireSystemSelect').addEventListener('change', (e) => {
+                document.getElementById('modalEntireSystemUrl').style.display =
                     e.target.value === 'custom' ? 'block' : 'none';
             });
         }
@@ -1258,70 +1853,60 @@
         }
 
         function buildCompose() {
-            const composeType = document.querySelector('input[name="composeType"]:checked').value;
             const compose = { include: [] };
 
-            switch (composeType) {
-                case 'codeList': {
-                    let system = document.getElementById('codeSystem').value;
-                    if (system === 'custom') {
-                        system = document.getElementById('customCodeSystem').value;
+            // Build includes from includeBlocks array
+            includeBlocks.forEach(includeBlock => {
+                const { type, data } = includeBlock;
+
+                switch (type) {
+                    case 'codeList': {
+                        if (data.codes.length > 0) {
+                            compose.include.push({
+                                system: data.system,
+                                concept: data.codes
+                            });
+                        } else {
+                            compose.include.push({ system: data.system });
+                        }
+                        break;
                     }
-                    const codes = parseCodeList(document.getElementById('codeListInput').value);
-                    if (codes.length > 0) {
+                    case 'ecl': {
                         compose.include.push({
-                            system: system,
-                            concept: codes
+                            system: 'http://snomed.info/sct',
+                            filter: [{
+                                property: 'constraint',
+                                op: '=',
+                                value: data.expression
+                            }]
                         });
-                    } else {
-                        compose.include.push({ system: system });
+                        break;
                     }
-                    break;
-                }
-                case 'ecl': {
-                    const ecl = document.getElementById('eclExpression').value;
-                    compose.include.push({
-                        system: 'http://snomed.info/sct',
-                        filter: [{
-                            property: 'constraint',
-                            op: '=',
-                            value: ecl
-                        }]
-                    });
-                    break;
-                }
-                case 'filter': {
-                    let system = document.getElementById('filterSystem').value;
-                    if (system === 'custom') {
-                        system = document.getElementById('customFilterSystem').value;
+                    case 'filter': {
+                        compose.include.push({
+                            system: data.system,
+                            filter: [{
+                                property: data.property,
+                                op: data.op,
+                                value: data.value
+                            }]
+                        });
+                        break;
                     }
-                    compose.include.push({
-                        system: system,
-                        filter: [{
-                            property: document.getElementById('filterProperty').value,
-                            op: document.getElementById('filterOp').value,
-                            value: document.getElementById('filterValue').value
-                        }]
-                    });
-                    break;
-                }
-                case 'valueSetRef': {
-                    compose.include.push({
-                        valueSet: [document.getElementById('valueSetRefUrl').value]
-                    });
-                    break;
-                }
-                case 'entireSystem': {
-                    let system = document.getElementById('entireSystemSelect').value;
-                    if (system === 'custom') {
-                        system = document.getElementById('entireSystemUrl').value;
+                    case 'valueSetRef': {
+                        compose.include.push({
+                            valueSet: [data.url]
+                        });
+                        break;
                     }
-                    compose.include.push({
-                        system: system
-                    });
-                    break;
+                    case 'entireSystem': {
+                        compose.include.push({
+                            system: data.system
+                        });
+                        break;
+                    }
                 }
-            }
+            });
 
             return compose;
         }
@@ -1547,41 +2132,55 @@
                 renderCopyrightList();
             }
 
-            // Compose section
-            if (vs.compose?.include?.[0]) {
-                const inc = vs.compose.include[0];
+            // Compose section - load ALL includes
+            includeBlocks = [];
+            if (vs.compose?.include) {
+                vs.compose.include.forEach(inc => {
+                    let type, data;
 
-                if (inc.valueSet) {
-                    // External ValueSet reference
-                    selectComposeType('valueSetRef');
-                    document.getElementById('valueSetRefUrl').value = inc.valueSet[0] || '';
-                } else if (inc.filter) {
-                    const filter = inc.filter[0];
-                    if (filter.property === 'constraint') {
-                        // ECL expression
-                        selectComposeType('ecl');
-                        document.getElementById('eclExpression').value = filter.value || '';
-                    } else {
-                        // Generic filter
-                        selectComposeType('filter');
-                        setFilterSystem(inc.system);
-                        document.getElementById('filterProperty').value = filter.property || 'concept';
-                        document.getElementById('filterOp').value = filter.op || '=';
-                        document.getElementById('filterValue').value = filter.value || '';
+                    if (inc.valueSet) {
+                        // External ValueSet reference
+                        type = 'valueSetRef';
+                        data = { url: inc.valueSet[0] || '' };
+                    } else if (inc.filter) {
+                        const filter = inc.filter[0];
+                        if (filter.property === 'constraint') {
+                            // ECL expression
+                            type = 'ecl';
+                            data = { expression: filter.value || '' };
+                        } else {
+                            // Generic filter
+                            type = 'filter';
+                            data = {
+                                system: inc.system,
+                                property: filter.property || 'concept',
+                                op: filter.op || '=',
+                                value: filter.value || ''
+                            };
+                        }
+                    } else if (inc.concept) {
+                        // Code list
+                        type = 'codeList';
+                        data = {
+                            system: inc.system,
+                            codes: inc.concept
+                        };
+                    } else if (inc.system) {
+                        // Entire system
+                        type = 'entireSystem';
+                        data = { system: inc.system };
                     }
-                } else if (inc.concept) {
-                    // Code list
-                    selectComposeType('codeList');
-                    setCodeSystem(inc.system);
-                    const codeText = inc.concept.map(c =>
-                        c.display ? `${c.code},${c.display}` : c.code
-                    ).join('\n');
-                    document.getElementById('codeListInput').value = codeText;
-                } else if (inc.system) {
-                    // Entire system
-                    selectComposeType('entireSystem');
-                    setEntireSystem(inc.system);
-                }
+
+                    if (type && data) {
+                        includeBlocks.push({
+                            id: 'include-' + Date.now() + '-' + includeBlocks.length,
+                            type: type,
+                            data: data
+                        });
+                    }
+                });
+
+                renderIncludeBlocksList();
             }
 
             updatePreview();
@@ -1629,8 +2228,7 @@
 
             try {
                 const text = await file.text();
-                document.getElementById('codeListInput').value = text;
-                updatePreview();
+                document.getElementById('modalCodeListInput').value = text;
                 showNotification('Code list loaded!');
             } catch (err) {
                 showNotification('Failed to read file', 'error');
@@ -1652,17 +2250,17 @@
             document.getElementById('copyright').value = '';
             selectedCopyrights = [];
             renderCopyrightList();
-            document.getElementById('codeListInput').value = '';
-            document.getElementById('eclExpression').value = '';
-            document.getElementById('filterProperty').value = 'concept';
-            document.getElementById('filterOp').value = '=';
-            document.getElementById('filterValue').value = '';
-            document.getElementById('valueSetRefUrl').value = '';
+
+            // Clear include blocks
+            includeBlocks = [];
+            renderIncludeBlocksList();
+            clearIncludeEditorForms();
+            document.getElementById('includeTypeSelect').value = '';
+
             document.getElementById('loadedFileName').textContent = '';
             document.getElementById('version').classList.remove('version-highlight');
 
             setDefaultDate();
-            selectComposeType('codeList');
             updatePreview();
             showNotification('Form cleared');
         }
