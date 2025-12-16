@@ -673,6 +673,147 @@
         .modal-close:hover {
             color: var(--text);
         }
+
+        /* Validation Report Styles */
+        .btn-info {
+            background: var(--info, #3b82f6);
+            color: white;
+            position: relative;
+        }
+
+        .btn-info:hover {
+            background: var(--info-dark, #2563eb);
+        }
+
+        .validation-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--error);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .validation-badge.warning-only {
+            background: var(--warning);
+        }
+
+        .validation-summary {
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .validation-summary.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .validation-summary.has-warnings {
+            border-left: 4px solid var(--warning);
+        }
+
+        .validation-summary.has-errors {
+            border-left: 4px solid var(--error);
+        }
+
+        .validation-section {
+            margin-bottom: 1rem;
+        }
+
+        .expandable-section {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .section-header:hover {
+            background: var(--card-bg);
+        }
+
+        .section-header.error {
+            color: var(--error);
+        }
+
+        .section-header.warning {
+            color: var(--warning);
+        }
+
+        .section-header.success {
+            color: var(--success);
+        }
+
+        .section-icon {
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .section-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 0 1rem 1rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        .validation-item {
+            padding: 0.5rem;
+            border-left: 3px solid var(--border);
+            background: var(--card-bg);
+            border-radius: 3px;
+            font-size: 0.875rem;
+        }
+
+        .validation-item.error {
+            border-left-color: var(--error);
+            background: color-mix(in srgb, var(--error) 10%, var(--card-bg));
+        }
+
+        .validation-item.warning {
+            border-left-color: var(--warning);
+            background: color-mix(in srgb, var(--warning) 10%, var(--card-bg));
+        }
+
+        .validation-item.info {
+            border-left-color: var(--success);
+            background: color-mix(in srgb, var(--success) 10%, var(--card-bg));
+        }
+
+        .validation-note {
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -858,6 +999,10 @@
                 <div class="output-actions">
                     <button class="btn btn-primary" onclick="downloadJSON()">Download JSON</button>
                     <button class="btn btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
+                    <button id="validateBtn" class="btn btn-info" onclick="showValidationReport()">
+                        <span id="validateIcon">✓</span> Validate
+                        <span id="validationBadge" class="validation-badge" style="display: none;"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -967,6 +1112,24 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeIncludeEditor()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveIncludeBlock()">Save Include</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Report Modal -->
+    <div id="validationReportModal" class="modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeValidationReport()"></div>
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>NCTS Validation Report</h3>
+                <button class="modal-close" onclick="closeValidationReport()">&times;</button>
+            </div>
+            <div class="modal-body" id="validationReportBody">
+                <!-- Validation report content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeValidationReport()">Close</button>
+                <button class="btn btn-primary" onclick="closeValidationReport(); downloadJSON();">Download Anyway</button>
             </div>
         </div>
     </div>
@@ -1638,6 +1801,16 @@
                 el.addEventListener('change', updatePreview);
             });
 
+            // Explicit listeners for key fields to ensure they trigger updates
+            const keyFields = ['description', 'narrativeText', 'status', 'experimental', 'date', 'identifier'];
+            keyFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('input', updatePreview);
+                    field.addEventListener('change', updatePreview);
+                }
+            });
+
             // File upload handlers
             document.getElementById('loadFile').addEventListener('change', loadExistingValueSet);
             document.getElementById('modalCodeListFile').addEventListener('change', loadCodeListFile);
@@ -1736,6 +1909,381 @@
             }
 
             updatePreview();
+        }
+
+        // Validation Report Functions
+        function validateValueSet() {
+            const results = {
+                errors: [],
+                warnings: [],
+                info: []
+            };
+
+            validateRequiredFields(results);
+            validateFormats(results);
+            validateBestPractices(results);
+            validateCompose(results);
+            addInfoChecks(results);
+
+            return results;
+        }
+
+        function validateRequiredFields(results) {
+            const title = document.getElementById('title').value.trim();
+            const name = document.getElementById('name').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const publisherId = document.getElementById('publisher').value;
+            const publisher = publishers.find(p => p.id === publisherId);
+            const version = document.getElementById('version').value.trim();
+            const date = document.getElementById('date').value;
+
+            if (!title) {
+                results.errors.push('Title field is required');
+            }
+            if (!name) {
+                results.errors.push('Name field is required');
+            }
+            if (!description) {
+                results.errors.push('Description field is required');
+            }
+            if (!publisher) {
+                results.errors.push('Publisher must be selected');
+            }
+            if (!version) {
+                results.errors.push('Version field is required');
+            }
+            if (!date) {
+                results.errors.push('Date field is required');
+            }
+        }
+
+        function validateFormats(results) {
+            const name = document.getElementById('name').value.trim();
+            const version = document.getElementById('version').value.trim();
+
+            if (name) {
+                // Validate PascalCase format
+                const namePattern = /^[A-Z]([A-Za-z0-9_]){0,254}$/;
+                if (!namePattern.test(name)) {
+                    results.errors.push('Name must be PascalCase format: start with capital letter, followed by alphanumeric characters or underscores only (no spaces or special characters)');
+                }
+
+                // Validate name length
+                if (name.length > 254) {
+                    results.errors.push('Name must not exceed 254 characters');
+                }
+
+                // Calculate ID lengths
+                if (version) {
+                    const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+                    const majorVersion = version.split('.')[0];
+                    const currentId = `${kebabName}-${majorVersion}`;
+                    const futureId = `${kebabName}-${version}`;
+
+                    // Hard limit check
+                    if (currentId.length > 64) {
+                        results.errors.push(`ID length (${currentId.length}) exceeds hard limit of 64 characters`);
+                    } else {
+                        // Recommended limit checks
+                        if (futureId.length > 63) {
+                            results.warnings.push(`ID with full version (${futureId.length} chars) may exceed recommended limit of 63 characters for previous versions`);
+                        } else if (currentId.length > 60) {
+                            results.warnings.push(`ID length (${currentId.length}) exceeds recommended 60 characters for latest versions`);
+                        }
+                    }
+                }
+            }
+        }
+
+        function validateBestPractices(results) {
+            const title = document.getElementById('title').value.trim();
+            const name = document.getElementById('name').value.trim();
+            const status = document.getElementById('status').value;
+            const experimental = document.getElementById('experimental').checked;
+            const identifier = document.getElementById('identifier').value.trim();
+
+            // Check if name matches PascalCase of title
+            if (title && name) {
+                const expectedName = title.split(/\s+/).map(word =>
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join('');
+                if (name !== expectedName) {
+                    results.warnings.push(`Name "${name}" differs from expected PascalCase of title "${expectedName}"`);
+                }
+            }
+
+            // Check title for special characters
+            if (title) {
+                if (/[^a-zA-Z0-9\s\-]/.test(title)) {
+                    results.warnings.push('Title contains special characters (recommended to use only letters, numbers, spaces, and hyphens)');
+                }
+
+                // Check for acronyms (2+ consecutive uppercase letters)
+                if (/[A-Z]{2,}/.test(title)) {
+                    results.warnings.push('Title may contain acronyms (recommended to avoid abbreviations)');
+                }
+            }
+
+            // Production readiness checks
+            if (status !== 'active') {
+                results.warnings.push('Status should be "active" for production resources');
+            }
+            if (experimental === true) {
+                results.warnings.push('Experimental should be false for production resources');
+            }
+
+            // Copyright notices
+            if (selectedCopyrights.length === 0) {
+                results.warnings.push('No copyright notices selected (recommended to include at least one)');
+            }
+
+            // Identifier (OID)
+            if (!identifier) {
+                results.warnings.push('Identifier (OID) not provided (recommended for NCTS resources)');
+            }
+        }
+
+        function validateCompose(results) {
+            if (includeBlocks.length === 0) {
+                results.errors.push('At least one include block must be defined in the compose section');
+            } else {
+                // Validate each include block has required data
+                let hasInvalidBlock = false;
+                includeBlocks.forEach((block, index) => {
+                    const data = block.data || {};
+
+                    if (block.type === 'codeList') {
+                        if (!data.system || !data.codes || data.codes.length === 0) {
+                            hasInvalidBlock = true;
+                        }
+                    } else if (block.type === 'ecl') {
+                        if (!data.expression) {
+                            hasInvalidBlock = true;
+                        }
+                    } else if (block.type === 'filter') {
+                        if (!data.system || !data.property || !data.op || !data.value) {
+                            hasInvalidBlock = true;
+                        }
+                    } else if (block.type === 'valueSetRef') {
+                        if (!data.valueSet) {
+                            hasInvalidBlock = true;
+                        }
+                    } else if (block.type === 'entireSystem') {
+                        if (!data.system) {
+                            hasInvalidBlock = true;
+                        }
+                    }
+                });
+
+                if (hasInvalidBlock) {
+                    results.errors.push('One or more include blocks are missing required data');
+                }
+            }
+        }
+
+        function addInfoChecks(results) {
+            const title = document.getElementById('title').value.trim();
+            const name = document.getElementById('name').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const publisherId = document.getElementById('publisher').value;
+            const publisher = publishers.find(p => p.id === publisherId);
+            const version = document.getElementById('version').value.trim();
+            const date = document.getElementById('date').value;
+            const identifier = document.getElementById('identifier').value.trim();
+            const status = document.getElementById('status').value;
+            const experimental = document.getElementById('experimental').checked;
+
+            // Add passed checks
+            if (title) results.info.push('✓ Title is provided');
+            if (name) {
+                const namePattern = /^[A-Z]([A-Za-z0-9_]){0,254}$/;
+                if (namePattern.test(name) && name.length <= 254) {
+                    results.info.push('✓ Name conforms to PascalCase format');
+                }
+            }
+            if (description) results.info.push('✓ Description is provided');
+            if (publisher) results.info.push('✓ Publisher is selected');
+            if (version) results.info.push('✓ Version is provided');
+            if (date) results.info.push('✓ Date is provided');
+            if (identifier) results.info.push('✓ Identifier (OID) is provided');
+            if (status === 'active') results.info.push('✓ Status is set to "active"');
+            if (experimental === false) results.info.push('✓ Experimental is set to false');
+            if (selectedCopyrights.length > 0) results.info.push(`✓ ${selectedCopyrights.length} copyright notice(s) selected`);
+            if (includeBlocks.length > 0) results.info.push(`✓ ${includeBlocks.length} include block(s) defined`);
+
+            // Meta profiles check
+            results.info.push('✓ Meta profiles automatically included');
+        }
+
+        function showValidationReport() {
+            try {
+                console.log('Showing validation report...');
+                const results = validateValueSet();
+                console.log('Validation results:', results);
+
+                const modal = document.getElementById('validationReportModal');
+                const body = document.getElementById('validationReportBody');
+
+                if (!modal) {
+                    console.error('Modal element not found!');
+                    return;
+                }
+                if (!body) {
+                    console.error('Modal body element not found!');
+                    return;
+                }
+
+                body.innerHTML = renderValidationReport(results);
+                modal.style.display = 'flex';
+                console.log('Modal should be visible now');
+            } catch (err) {
+                console.error('Error showing validation report:', err);
+                alert('Error showing validation report. Check console for details.');
+            }
+        }
+
+        function closeValidationReport() {
+            const modal = document.getElementById('validationReportModal');
+            modal.style.display = 'none';
+        }
+
+        function renderValidationReport(results) {
+            const hasErrors = results.errors.length > 0;
+            const hasWarnings = results.warnings.length > 0;
+            const totalIssues = results.errors.length + results.warnings.length;
+
+            let summaryClass = 'success';
+            let summaryIcon = '✓';
+            let summaryText = 'All validation checks passed!';
+
+            if (hasErrors) {
+                summaryClass = 'has-errors';
+                summaryIcon = '✗';
+                summaryText = `Found ${results.errors.length} error(s) and ${results.warnings.length} warning(s)`;
+            } else if (hasWarnings) {
+                summaryClass = 'has-warnings';
+                summaryIcon = '⚠';
+                summaryText = `Found ${results.warnings.length} warning(s)`;
+            }
+
+            let html = `
+                <div class="validation-summary ${summaryClass}">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">
+                        <span style="font-size: 1.5rem; margin-right: 0.5rem;">${summaryIcon}</span>
+                        ${summaryText}
+                    </div>
+                    <div style="color: var(--text-muted);">
+                        ${results.info.length} checks passed
+                        ${hasErrors ? `, ${results.errors.length} errors` : ''}
+                        ${hasWarnings ? `, ${results.warnings.length} warnings` : ''}
+                    </div>
+                </div>
+            `;
+
+            // Errors section
+            if (hasErrors) {
+                html += `
+                    <div class="validation-section">
+                        <div class="expandable-section">
+                            <div class="section-header error" onclick="toggleSection('errors')">
+                                <span class="section-icon" id="errors-icon">▼</span>
+                                <span>Errors (${results.errors.length})</span>
+                            </div>
+                            <div class="section-content" id="errors-content">
+                                ${results.errors.map(error => `
+                                    <div class="validation-item error">✗ ${error}</div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Warnings section
+            if (hasWarnings) {
+                html += `
+                    <div class="validation-section">
+                        <div class="expandable-section">
+                            <div class="section-header warning" onclick="toggleSection('warnings')">
+                                <span class="section-icon" id="warnings-icon">▼</span>
+                                <span>Warnings (${results.warnings.length})</span>
+                            </div>
+                            <div class="section-content" id="warnings-content">
+                                ${results.warnings.map(warning => `
+                                    <div class="validation-item warning">⚠ ${warning}</div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Passed checks section (collapsed by default)
+            if (results.info.length > 0) {
+                html += `
+                    <div class="validation-section">
+                        <div class="expandable-section">
+                            <div class="section-header success" onclick="toggleSection('passed')">
+                                <span class="section-icon collapsed" id="passed-icon">▼</span>
+                                <span>Passed Checks (${results.info.length})</span>
+                            </div>
+                            <div class="section-content collapsed" id="passed-content">
+                                ${results.info.map(info => `
+                                    <div class="validation-item info">${info}</div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Note about downloading
+            if (hasErrors || hasWarnings) {
+                html += `
+                    <div class="validation-note">
+                        <strong>Note:</strong> You can still download the JSON file, but ${hasErrors ? 'it may not be NCTS compliant' : 'some best practices are not followed'}.
+                        ${hasErrors ? ' Please address the errors above for full compliance.' : ''}
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        function toggleSection(sectionId) {
+            const content = document.getElementById(`${sectionId}-content`);
+            const icon = document.getElementById(`${sectionId}-icon`);
+
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                icon.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                icon.classList.add('collapsed');
+            }
+        }
+
+        function updateValidationBadge() {
+            const results = validateValueSet();
+            const badge = document.getElementById('validationBadge');
+            const icon = document.getElementById('validateIcon');
+            const totalIssues = results.errors.length + results.warnings.length;
+
+            if (totalIssues > 0) {
+                badge.textContent = totalIssues;
+                badge.style.display = 'flex';
+
+                if (results.errors.length > 0) {
+                    badge.classList.remove('warning-only');
+                    icon.textContent = '✗';
+                } else {
+                    badge.classList.add('warning-only');
+                    icon.textContent = '⚠';
+                }
+            } else {
+                badge.style.display = 'none';
+                icon.textContent = '✓';
+            }
         }
 
         function selectComposeType(type) {
@@ -1927,6 +2475,13 @@
             const valueSet = generateValueSet();
             const json = JSON.stringify(valueSet, null, 2);
             document.getElementById('jsonPreview').innerHTML = syntaxHighlight(json);
+
+            // Update validation badge - wrapped in try-catch to prevent blocking preview updates
+            try {
+                updateValidationBadge();
+            } catch (err) {
+                console.error('Validation badge update failed:', err);
+            }
         }
 
         function syntaxHighlight(json) {
