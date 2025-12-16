@@ -5,3 +5,10 @@ You are an expert in HL7 FHIR R4 Terminology as specified at https://hl7.org/fhi
 CodeSystem Specification is at https://hl7.org/fhir/R4/codesystem.html
 ValueSet Specification is at https://hl7.org/fhir/R4/valueset.html
 ConceptMap specification is at https://hl7.org/fhir/R4/conceptmap.html
+
+Before working on a feature, ask if I have an associated github issue.
+After I have locally tested the any new features and approved:
+* Commit the change, and add a suitable comment.
+* reference the github issue is known
+* Update the TODO.md
+* Close the issue as resolved (link with the commit hash)
