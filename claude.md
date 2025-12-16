@@ -8,7 +8,7 @@ ConceptMap specification is at https://hl7.org/fhir/R4/conceptmap.html
 
 Before working on a feature, ask if I have an associated github issue.
 After I have locally tested the any new features and approved:
+* Update the TODO.md
 * Commit the change, and add a suitable comment.
 * reference the github issue is known
-* Update the TODO.md
 * Close the issue as resolved (link with the commit hash)
