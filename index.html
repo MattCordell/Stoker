@@ -1171,6 +1171,134 @@
         // Initialize theme immediately to prevent flash
         initTheme();
 
+        // Focus management for modals
+        // Find all focusable elements within a container
+        function getFocusableElements(container) {
+            const focusableSelectors = [
+                'button:not([disabled]):not([style*="display:none"])',
+                'input:not([disabled]):not([type="hidden"])',
+                'textarea:not([disabled])',
+                'select:not([disabled])',
+                'a[href]',
+                '[tabindex]:not([tabindex="-1"])'
+            ].join(',');
+
+            return Array.from(container.querySelectorAll(focusableSelectors))
+                .filter(element => {
+                    // Exclude hidden elements and their children
+                    return element.offsetParent !== null &&
+                           element.style.display !== 'none' &&
+                           getComputedStyle(element).display !== 'none';
+                });
+        }
+
+        // Create a focus trap object for a modal
+        function createFocusTrap(modalElement, modalContentElement, closeCallback) {
+            return {
+                modalElement: modalElement,
+                modalContentElement: modalContentElement,
+                closeCallback: closeCallback,
+                previouslyFocusedElement: null,
+                focusableElements: [],
+                boundHandleKeyDown: null,
+
+                // Initialize trap when modal opens
+                activate: function(triggerElement) {
+                    this.previouslyFocusedElement = triggerElement || document.activeElement;
+                    this.focusableElements = getFocusableElements(this.modalContentElement);
+
+                    if (this.focusableElements.length === 0) {
+                        console.warn('No focusable elements found in modal');
+                        return;
+                    }
+
+                    // Set initial focus to first focusable element
+                    this.setInitialFocus();
+
+                    // Attach keyboard event listener
+                    this.boundHandleKeyDown = this.handleKeyDown.bind(this);
+                    document.addEventListener('keydown', this.boundHandleKeyDown);
+                },
+
+                // Set focus to first focusable element (prefer form fields)
+                setInitialFocus: function() {
+                    if (this.focusableElements.length > 0) {
+                        // Prefer first input/textarea/select for better UX
+                        const preferredElement = this.focusableElements.find(el =>
+                            el.tagName === 'INPUT' ||
+                            el.tagName === 'TEXTAREA' ||
+                            el.tagName === 'SELECT'
+                        );
+
+                        if (preferredElement) {
+                            preferredElement.focus();
+                        } else {
+                            this.focusableElements[0].focus();
+                        }
+                    }
+                },
+
+                // Handle Tab/Shift+Tab and Escape key
+                handleKeyDown: function(event) {
+                    // Only handle if modal is visible
+                    if (this.modalElement.style.display === 'none') return;
+
+                    switch(event.key) {
+                        case 'Escape':
+                            event.preventDefault();
+                            if (this.closeCallback) {
+                                this.closeCallback();
+                            }
+                            break;
+
+                        case 'Tab':
+                            this.handleTabKey(event);
+                            break;
+                    }
+                },
+
+                // Handle Tab key cycling through focusable elements
+                handleTabKey: function(event) {
+                    const activeElement = document.activeElement;
+                    const focusedIndex = this.focusableElements.indexOf(activeElement);
+
+                    if (event.shiftKey) {
+                        // Shift+Tab - move to previous element
+                        event.preventDefault();
+                        const previousIndex = focusedIndex <= 0 ?
+                            this.focusableElements.length - 1 : focusedIndex - 1;
+                        this.focusableElements[previousIndex].focus();
+                    } else {
+                        // Tab - move to next element
+                        event.preventDefault();
+                        const nextIndex = focusedIndex >= this.focusableElements.length - 1 ?
+                            0 : focusedIndex + 1;
+                        this.focusableElements[nextIndex].focus();
+                    }
+                },
+
+                // Deactivate trap when modal closes
+                deactivate: function() {
+                    if (this.boundHandleKeyDown) {
+                        document.removeEventListener('keydown', this.boundHandleKeyDown);
+                    }
+
+                    // Return focus to previously focused element
+                    if (this.previouslyFocusedElement &&
+                        typeof this.previouslyFocusedElement.focus === 'function') {
+                        this.previouslyFocusedElement.focus();
+                    }
+
+                    this.focusableElements = [];
+                    this.previouslyFocusedElement = null;
+                }
+            };
+        }
+
+        // Global focus trap instances
+        let includeEditorFocusTrap = null;
+        let validationReportFocusTrap = null;
+
         // Configuration data
         let publishers = [];
         let copyrights = [];
@@ -1459,6 +1587,11 @@
             showModalComposeSection(type);
 
             modal.style.display = 'flex';
+
+            // Activate focus trap
+            if (includeEditorFocusTrap) {
+                includeEditorFocusTrap.activate(document.activeElement);
+            }
         }
 
         function showModalComposeSection(type) {
@@ -1476,6 +1609,12 @@
 
         function closeIncludeEditor() {
             const modal = document.getElementById('includeEditorModal');
+
+            // Deactivate focus trap
+            if (includeEditorFocusTrap) {
+                includeEditorFocusTrap.deactivate();
+            }
+
             modal.style.display = 'none';
             currentEditingIncludeId = null;
             clearIncludeEditorForms();
@@ -1799,6 +1938,15 @@
         }
 
         function setupEventListeners() {
+            // Initialize focus traps for modals
+            const includeModal = document.getElementById('includeEditorModal');
+            const includeContent = includeModal.querySelector('[role="dialog"]');
+            includeEditorFocusTrap = createFocusTrap(includeModal, includeContent, closeIncludeEditor);
+
+            const validationModal = document.getElementById('validationReportModal');
+            const validationContent = validationModal.querySelector('[role="dialog"]');
+            validationReportFocusTrap = createFocusTrap(validationModal, validationContent, closeValidationReport);
+
             // Update preview on any input change
             document.querySelectorAll('input, textarea, select').forEach(el => {
                 el.addEventListener('input', updatePreview);
@@ -2140,6 +2288,13 @@
                 body.innerHTML = renderValidationReport(results);
                 modal.style.display = 'flex';
                 console.log('Modal should be visible now');
+
+                // Activate focus trap with delay to allow dynamic content to render
+                setTimeout(() => {
+                    if (validationReportFocusTrap) {
+                        validationReportFocusTrap.activate(document.activeElement);
+                    }
+                }, 50);
             } catch (err) {
                 console.error('Error showing validation report:', err);
                 alert('Error showing validation report. Check console for details.');
@@ -2148,6 +2303,12 @@
 
         function closeValidationReport() {
             const modal = document.getElementById('validationReportModal');
+
+            // Deactivate focus trap
+            if (validationReportFocusTrap) {
+                validationReportFocusTrap.deactivate();
+            }
+
             modal.style.display = 'none';
         }
 

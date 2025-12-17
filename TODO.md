@@ -18,10 +18,11 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
   - Add same attributes to validation report modal
   - **Implementation**: Both modals now fully accessible with proper ARIA attributes
 
-- [ ] **Implement focus management for modals** ([#17](https://github.com/MattCordell/Stoker/issues/17))
+✅ ~~**Implement focus management for modals**~~ ([#17](https://github.com/MattCordell/Stoker/issues/17)) **COMPLETED**
   - Trap focus within modals when open
   - Return focus to triggering element when closed
   - Update `openIncludeEditor()` and `closeIncludeEditor()` functions
+  - **Implementation**: Added reusable focus trap mechanism with keyboard navigation (Tab/Shift+Tab cycling, Escape to close), automatic focus on first form field, and focus restoration to triggering element. Updated all four modal functions (openIncludeEditor, closeIncludeEditor, showValidationReport, closeValidationReport)
 
 - [ ] **Add keyboard navigation for drag-and-drop** ([#18](https://github.com/MattCordell/Stoker/issues/18))
   - Add up/down arrow buttons for reordering copyright notices
