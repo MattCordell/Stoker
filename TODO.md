@@ -249,11 +249,15 @@ After implementing changes, test:
 
 ## Browser Support Targets
 
-Before implementing browser compatibility features, confirm target browsers:
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- Mobile browsers?
-- Older browsers (IE11, Safari < 14)?
+**Supported Browsers:**
+- Chrome/Edge (latest versions)
+- Firefox (latest versions)
+- Safari (latest versions)
+- Modern mobile browsers (iOS Safari, Chrome Mobile)
 
-This will determine which polyfills/fallbacks are necessary.
+**Not Supported:**
+- Internet Explorer 11 and earlier
+- Safari < 14
+- Other legacy browsers
+
+**Rationale:** Users of this tool are expected to use modern, up-to-date browsers. The application relies on modern web APIs (Clipboard API, File API, CSS custom properties) that are well-supported in current browser versions. Polyfills and backwards compatibility for legacy browsers are not implemented (see [#33](https://github.com/MattCordell/Stoker/issues/33)).
