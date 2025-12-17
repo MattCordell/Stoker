@@ -49,9 +49,10 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
   - Already has basic error handling, but ensure all edge cases covered
   - **Implementation**: Enhanced error handling with empty file validation, console logging for debugging, and informative success messages showing filename and code count. Validates content is not empty/whitespace-only before processing. Follows established patterns from loadExistingValueSet()
 
-- [ ] **Add file size validation** ([#22](https://github.com/MattCordell/Stoker/issues/22)) (index.html:2546)
+✅ ~~**Add file size validation**~~ ([#22](https://github.com/MattCordell/Stoker/issues/22)) **COMPLETED**
   - Add 10MB file size limit check before parsing JSON
   - Prevent browser hang on very large files
+  - **Implementation**: Created shared validateFileSize() utility function with MAX_FILE_SIZE constant (10MB). Added file size validation to both loadExistingValueSet() and loadCodeListFile() functions. Shows informative error messages with actual file size vs limit. Includes console logging for debugging. Prevents browser freeze by checking file size before reading/parsing
 
 ### User Experience
 

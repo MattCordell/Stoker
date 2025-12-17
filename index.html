@@ -2777,6 +2777,23 @@
             }, PREVIEW_DEBOUNCE_DELAY);
         }
 
+        // File size validation
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+        function validateFileSize(file, maxSizeBytes) {
+            if (file.size > maxSizeBytes) {
+                const maxSizeMB = (maxSizeBytes / (1024 * 1024)).toFixed(0);
+                const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                showNotification(
+                    `File too large (${fileSizeMB}MB). Maximum is ${maxSizeMB}MB`,
+                    'error'
+                );
+                console.error(`File size validation failed: ${file.name} is ${fileSizeMB}MB (max: ${maxSizeMB}MB)`);
+                return false;
+            }
+            return true;
+        }
+
         function updatePreview() {
             const valueSet = generateValueSet();
             const json = JSON.stringify(valueSet, null, 2);
@@ -2862,6 +2879,11 @@
         async function loadExistingValueSet(event) {
             const file = event.target.files[0];
             if (!file) return;
+
+            if (!validateFileSize(file, MAX_FILE_SIZE)) {
+                event.target.value = '';
+                return;
+            }
 
             try {
                 const text = await file.text();
@@ -3096,6 +3118,11 @@
         async function loadCodeListFile(event) {
             const file = event.target.files[0];
             if (!file) return;
+
+            if (!validateFileSize(file, MAX_FILE_SIZE)) {
+                event.target.value = '';
+                return;
+            }
 
             try {
                 const text = await file.text();
