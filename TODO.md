@@ -113,10 +113,6 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
   - Replace `setModalCodeSystem()`, `setModalFilterSystem()`, `setModalEntireSystem()`
   - Also replace `setCodeSystem()`, `setFilterSystem()`, `setEntireSystem()`
 
-- [ ] **Enhance download filename** ([#30](https://github.com/MattCordell/Stoker/issues/30)) (index.html:2514)
-  - Add date to filename: `ValueSet-${valueSet.id}-${date}.json`
-  - Improves file organization for users
-
 ### User Experience
 
 - [ ] **Add diff view for loaded resources** ([#43](https://github.com/MattCordell/Stoker/issues/43))
@@ -146,10 +142,6 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
   - Check for CSS custom properties support
   - Check for File API support
   - Add graceful degradation or user warnings
-
-- [ ] **Consider polyfills** ([#33](https://github.com/MattCordell/Stoker/issues/33))
-  - Evaluate if older browser support needed (IE11, older Safari)
-  - Add polyfills only if target audience requires it
 
 ### Documentation
 
@@ -196,19 +188,10 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
 
 ### User Experience (Nice to Have)
 
-- [ ] **Add keyboard shortcuts** ([#40](https://github.com/MattCordell/Stoker/issues/40))
-  - Ctrl/Cmd + S to download JSON
-  - Ctrl/Cmd + K to open validation report
-  - Escape to close modals (if not already implemented)
-
 - [ ] **Add export to other formats** ([#41](https://github.com/MattCordell/Stoker/issues/41))
   - Consider XML export option
   - Consider YAML export option
   - Only if requested by users
-
-- [ ] **Add dark/light theme preview** ([#42](https://github.com/MattCordell/Stoker/issues/42))
-  - Show mini preview of theme before switching
-  - Nice visual enhancement
 
 ---
 
@@ -223,6 +206,10 @@ The following were identified in the code review but explicitly excluded:
   - Duplicate code detection
   - System URL format validation
   - ECL syntax validation
+- **Enhance download filename** ([#30](https://github.com/MattCordell/Stoker/issues/30)) - Current filename with version is adequate
+- **Consider polyfills** ([#33](https://github.com/MattCordell/Stoker/issues/33)) - Target users should use modern browsers
+- **Add keyboard shortcuts** ([#40](https://github.com/MattCordell/Stoker/issues/40)) - Unnecessary; can revisit if users request
+- **Add dark/light theme preview** ([#42](https://github.com/MattCordell/Stoker/issues/42)) - Completely unnecessary; current theme toggle works well
 
 ---
 
