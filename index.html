@@ -2828,8 +2828,18 @@
         function copyToClipboard() {
             const valueSet = generateValueSet();
             const json = JSON.stringify(valueSet, null, 2);
+
+            if (!navigator.clipboard) {
+                showNotification('Clipboard API not available (requires HTTPS or localhost)', 'error');
+                console.error('Clipboard API not available in this context');
+                return;
+            }
+
             navigator.clipboard.writeText(json).then(() => {
                 showNotification('Copied to clipboard!');
+            }).catch((err) => {
+                showNotification('Failed to copy to clipboard', 'error');
+                console.error('Clipboard error:', err);
             });
         }
 

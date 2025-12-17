@@ -40,9 +40,10 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
 
 ### Error Handling
 
-- [ ] **Add try-catch to copyToClipboard()** ([#20](https://github.com/MattCordell/Stoker/issues/20)) (index.html:2522-2528)
+✅ ~~**Add try-catch to copyToClipboard()**~~ ([#20](https://github.com/MattCordell/Stoker/issues/20)) **COMPLETED**
   - Handle promise rejection if clipboard API fails
   - Show error notification to user
+  - **Implementation**: Added comprehensive error handling with feature detection for navigator.clipboard availability and promise rejection handling. Shows helpful error messages for non-secure contexts (requires HTTPS or localhost) and clipboard API failures. Includes console logging for debugging
 
 - [ ] **Add try-catch to loadCodeListFile()** ([#21](https://github.com/MattCordell/Stoker/issues/21)) (index.html:2780-2793)
   - Already has basic error handling, but ensure all edge cases covered
