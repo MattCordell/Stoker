@@ -65,6 +65,12 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
   - Change name field validation from `oninput` to `onblur`
   - Reduces distracting warnings while user is still typing
 
+- [ ] **Add diff view for loaded resources** ([#43](https://github.com/MattCordell/Stoker/issues/43))
+  - Show comparison between original loaded resource and current edited version
+  - Particularly useful for legacy resources not authored using Stoker
+  - Helps identify atypical copyright notices or other anomalies
+  - Implementation: side-by-side or inline diff view with add/remove/modify highlighting
+
 ---
 
 ## 🟡 Medium Priority
@@ -115,14 +121,6 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
   - Create unified `setModalSystemSelect(selectId, customInputId, system)` function
   - Replace `setModalCodeSystem()`, `setModalFilterSystem()`, `setModalEntireSystem()`
   - Also replace `setCodeSystem()`, `setFilterSystem()`, `setEntireSystem()`
-
-### User Experience
-
-- [ ] **Add diff view for loaded resources** ([#43](https://github.com/MattCordell/Stoker/issues/43))
-  - Show comparison between original loaded resource and current edited version
-  - Particularly useful for legacy resources not authored using Stoker
-  - Helps identify atypical copyright notices or other anomalies
-  - Implementation: side-by-side or inline diff view with add/remove/modify highlighting
 
 ### Security
 
