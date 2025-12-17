@@ -56,10 +56,11 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
 
 ### User Experience
 
-- [ ] **Add unsaved changes warning** ([#23](https://github.com/MattCordell/Stoker/issues/23))
+✅ ~~**Add unsaved changes warning**~~ ([#23](https://github.com/MattCordell/Stoker/issues/23)) **COMPLETED**
   - Implement `beforeunload` event listener
   - Track form dirty state
   - Warn users before leaving page with unsaved work
+  - **Implementation**: Added hasUnsavedChanges flag with markFormAsDirty()/markFormAsClean() helper functions. Form is marked dirty on any input change, copyright/include block modifications. Form is marked clean on download, clear, load, and initial page load. Browser shows native warning dialog when attempting to leave page with unsaved changes
 
 - [ ] **Improve validation UX** ([#24](https://github.com/MattCordell/Stoker/issues/24)) (index.html:1861-1912)
   - Change name field validation from `oninput` to `onblur`

@@ -1342,12 +1342,16 @@
         let includeBlocks = []; // Array of include configuration objects
         let currentEditingIncludeId = null; // ID of include being edited in modal
 
+        // Track unsaved changes
+        let hasUnsavedChanges = false;
+
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             await loadConfig();
             setDefaultDate();
             updatePreview();
             setupEventListeners();
+            markFormAsClean(); // Start with no unsaved changes
         });
 
         async function loadConfig() {
@@ -1460,12 +1464,14 @@
             renderCopyrightList();
             select.value = '';
             updatePreview();
+            markFormAsDirty();
         }
 
         function removeCopyrightNotice(copyrightId) {
             selectedCopyrights = selectedCopyrights.filter(id => id !== copyrightId);
             renderCopyrightList();
             updatePreview();
+            markFormAsDirty();
         }
 
         function moveCopyrightNotice(fromIndex, toIndex) {
@@ -1474,6 +1480,7 @@
             selectedCopyrights.splice(toIndex, 0, item);
             renderCopyrightList();
             updatePreview();
+            markFormAsDirty();
         }
 
         function moveCopyrightUp(index) {
@@ -1733,6 +1740,7 @@
             renderIncludeBlocksList();
             closeIncludeEditor();
             updatePreview();
+            markFormAsDirty();
         }
 
         function extractIncludeData(type) {
@@ -1866,6 +1874,7 @@
             includeBlocks = includeBlocks.filter(i => i.id !== includeId);
             renderIncludeBlocksList();
             updatePreview();
+            markFormAsDirty();
         }
 
         function moveIncludeBlock(fromIndex, toIndex) {
@@ -1874,6 +1883,7 @@
             includeBlocks.splice(toIndex, 0, item);
             renderIncludeBlocksList();
             updatePreview();
+            markFormAsDirty();
         }
 
         function moveIncludeBlockUp(index) {
@@ -2067,10 +2077,24 @@
             const validationContent = validationModal.querySelector('[role="dialog"]');
             validationReportFocusTrap = createFocusTrap(validationModal, validationContent, closeValidationReport);
 
-            // Update preview on any input change
+            // Warn before leaving page with unsaved changes
+            window.addEventListener('beforeunload', (e) => {
+                if (hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.returnValue = ''; // Required for Chrome
+                }
+            });
+
+            // Update preview on any input change and mark form as dirty
             document.querySelectorAll('input, textarea, select').forEach(el => {
-                el.addEventListener('input', debouncedUpdatePreview);
-                el.addEventListener('change', updatePreview);
+                el.addEventListener('input', () => {
+                    markFormAsDirty();
+                    debouncedUpdatePreview();
+                });
+                el.addEventListener('change', () => {
+                    markFormAsDirty();
+                    updatePreview();
+                });
             });
 
             // Explicit listeners for key fields to ensure they trigger updates
@@ -2100,6 +2124,15 @@
                 document.getElementById('modalEntireSystemUrl').style.display =
                     e.target.value === 'custom' ? 'block' : 'none';
             });
+        }
+
+        // Unsaved changes tracking
+        function markFormAsDirty() {
+            hasUnsavedChanges = true;
+        }
+
+        function markFormAsClean() {
+            hasUnsavedChanges = false;
         }
 
         function suggestName() {
@@ -2840,6 +2873,7 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             showNotification('ValueSet downloaded successfully!');
+            markFormAsClean(); // Clear unsaved changes flag after successful download
         }
 
         function copyToClipboard() {
@@ -2907,6 +2941,9 @@
 
                 // Trigger validation to show warnings
                 validateNameField();
+
+                // Clear unsaved changes flag after loading file
+                markFormAsClean();
 
             } catch (err) {
                 showNotification('Failed to parse JSON file', 'error');
@@ -3179,6 +3216,7 @@
             setDefaultDate();
             updatePreview();
             showNotification('Form cleared');
+            markFormAsClean(); // Clear unsaved changes flag after clearing form
         }
     </script>
 </body>
