@@ -2069,7 +2069,7 @@
 
             // Update preview on any input change
             document.querySelectorAll('input, textarea, select').forEach(el => {
-                el.addEventListener('input', updatePreview);
+                el.addEventListener('input', debouncedUpdatePreview);
                 el.addEventListener('change', updatePreview);
             });
 
@@ -2078,7 +2078,7 @@
             keyFields.forEach(fieldId => {
                 const field = document.getElementById(fieldId);
                 if (field) {
-                    field.addEventListener('input', updatePreview);
+                    field.addEventListener('input', debouncedUpdatePreview);
                     field.addEventListener('change', updatePreview);
                 }
             });
@@ -2180,7 +2180,7 @@
                 warningDiv.style.display = 'none';
             }
 
-            updatePreview();
+            debouncedUpdatePreview();
         }
 
         // Validation Report Functions
@@ -2758,6 +2758,23 @@
                 }
                 return concept;
             });
+        }
+
+        // Debounce configuration for preview updates
+        let updatePreviewTimeoutId = null;
+        const PREVIEW_DEBOUNCE_DELAY = 200; // milliseconds
+
+        function debouncedUpdatePreview() {
+            // Clear any pending update
+            if (updatePreviewTimeoutId !== null) {
+                clearTimeout(updatePreviewTimeoutId);
+            }
+
+            // Schedule new update
+            updatePreviewTimeoutId = setTimeout(() => {
+                updatePreview();
+                updatePreviewTimeoutId = null;
+            }, PREVIEW_DEBOUNCE_DELAY);
         }
 
         function updatePreview() {
