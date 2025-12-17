@@ -40,16 +40,19 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
 
 ### Error Handling
 
-- [ ] **Add try-catch to copyToClipboard()** ([#20](https://github.com/MattCordell/Stoker/issues/20)) (index.html:2522-2528)
+✅ ~~**Add try-catch to copyToClipboard()**~~ ([#20](https://github.com/MattCordell/Stoker/issues/20)) **COMPLETED**
   - Handle promise rejection if clipboard API fails
   - Show error notification to user
+  - **Implementation**: Added comprehensive error handling with feature detection for navigator.clipboard availability and promise rejection handling. Shows helpful error messages for non-secure contexts (requires HTTPS or localhost) and clipboard API failures. Includes console logging for debugging
 
-- [ ] **Add try-catch to loadCodeListFile()** ([#21](https://github.com/MattCordell/Stoker/issues/21)) (index.html:2780-2793)
+✅ ~~**Add try-catch to loadCodeListFile()**~~ ([#21](https://github.com/MattCordell/Stoker/issues/21)) **COMPLETED**
   - Already has basic error handling, but ensure all edge cases covered
+  - **Implementation**: Enhanced error handling with empty file validation, console logging for debugging, and informative success messages showing filename and code count. Validates content is not empty/whitespace-only before processing. Follows established patterns from loadExistingValueSet()
 
-- [ ] **Add file size validation** ([#22](https://github.com/MattCordell/Stoker/issues/22)) (index.html:2546)
+✅ ~~**Add file size validation**~~ ([#22](https://github.com/MattCordell/Stoker/issues/22)) **COMPLETED**
   - Add 10MB file size limit check before parsing JSON
   - Prevent browser hang on very large files
+  - **Implementation**: Created shared validateFileSize() utility function with MAX_FILE_SIZE constant (10MB). Added file size validation to both loadExistingValueSet() and loadCodeListFile() functions. Shows informative error messages with actual file size vs limit. Includes console logging for debugging. Prevents browser freeze by checking file size before reading/parsing
 
 ### User Experience
 
