@@ -597,6 +597,40 @@
             transform: scale(1.2);
         }
 
+        /* Navigation buttons for reordering */
+        .copyright-nav-buttons,
+        .include-nav-buttons {
+            display: flex;
+            gap: 0.25rem;
+            flex-shrink: 0;
+            margin-left: 0.5rem;
+        }
+
+        .move-up-btn,
+        .move-down-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .move-up-btn:hover:not(:disabled),
+        .move-down-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .move-up-btn:disabled,
+        .move-down-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* Modal styles */
         .modal {
             position: fixed;
@@ -1442,6 +1476,18 @@
             updatePreview();
         }
 
+        function moveCopyrightUp(index) {
+            if (index > 0) {
+                moveCopyrightNotice(index, index - 1);
+            }
+        }
+
+        function moveCopyrightDown(index) {
+            if (index < selectedCopyrights.length - 1) {
+                moveCopyrightNotice(index, index + 1);
+            }
+        }
+
         function renderCopyrightList() {
             const container = document.getElementById('copyrightList');
             container.innerHTML = '';
@@ -1488,6 +1534,37 @@
                 removeBtn.onclick = () => removeCopyrightNotice(copyrightId);
 
                 item.appendChild(handle);
+
+                // Navigation buttons
+                const navContainer = document.createElement('div');
+                navContainer.className = 'copyright-nav-buttons';
+
+                const moveUpBtn = document.createElement('button');
+                moveUpBtn.className = 'move-up-btn';
+                moveUpBtn.textContent = '↑';
+                moveUpBtn.title = 'Move up';
+                moveUpBtn.setAttribute('aria-label', 'Move copyright notice up');
+                moveUpBtn.disabled = (index === 0);
+                moveUpBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    moveCopyrightUp(index);
+                };
+
+                const moveDownBtn = document.createElement('button');
+                moveDownBtn.className = 'move-down-btn';
+                moveDownBtn.textContent = '↓';
+                moveDownBtn.title = 'Move down';
+                moveDownBtn.setAttribute('aria-label', 'Move copyright notice down');
+                moveDownBtn.disabled = (index === selectedCopyrights.length - 1);
+                moveDownBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    moveCopyrightDown(index);
+                };
+
+                navContainer.appendChild(moveUpBtn);
+                navContainer.appendChild(moveDownBtn);
+                item.appendChild(navContainer);
+
                 item.appendChild(name);
                 item.appendChild(category);
                 item.appendChild(removeBtn);
@@ -1799,6 +1876,18 @@
             updatePreview();
         }
 
+        function moveIncludeBlockUp(index) {
+            if (index > 0) {
+                moveIncludeBlock(index, index - 1);
+            }
+        }
+
+        function moveIncludeBlockDown(index) {
+            if (index < includeBlocks.length - 1) {
+                moveIncludeBlock(index, index + 1);
+            }
+        }
+
         function renderIncludeBlocksList() {
             const container = document.getElementById('includeBlocksList');
             container.innerHTML = '';
@@ -1847,6 +1936,37 @@
                 removeBtn.onclick = () => removeIncludeBlock(include.id);
 
                 item.appendChild(handle);
+
+                // Navigation buttons
+                const navContainer = document.createElement('div');
+                navContainer.className = 'include-nav-buttons';
+
+                const moveUpBtn = document.createElement('button');
+                moveUpBtn.className = 'move-up-btn';
+                moveUpBtn.textContent = '↑';
+                moveUpBtn.title = 'Move up';
+                moveUpBtn.setAttribute('aria-label', 'Move include block up');
+                moveUpBtn.disabled = (index === 0);
+                moveUpBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    moveIncludeBlockUp(index);
+                };
+
+                const moveDownBtn = document.createElement('button');
+                moveDownBtn.className = 'move-down-btn';
+                moveDownBtn.textContent = '↓';
+                moveDownBtn.title = 'Move down';
+                moveDownBtn.setAttribute('aria-label', 'Move include block down');
+                moveDownBtn.disabled = (index === includeBlocks.length - 1);
+                moveDownBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    moveIncludeBlockDown(index);
+                };
+
+                navContainer.appendChild(moveUpBtn);
+                navContainer.appendChild(moveDownBtn);
+                item.appendChild(navContainer);
+
                 item.appendChild(content);
                 item.appendChild(badge);
                 item.appendChild(removeBtn);

@@ -12,3 +12,6 @@ After I have locally tested the any new features and approved:
 * Commit the change, and add a suitable comment.
 * reference the github issue is known
 * Close the issue as resolved (link with the commit hash)
+
+* For commit messages, Acknowledge AI use with the following text only
+"Co-Authored-By: [Claude Code] (https://claude.com/claude-code) Sonnet 4.5"

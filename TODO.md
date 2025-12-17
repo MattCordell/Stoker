@@ -24,10 +24,11 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
   - Update `openIncludeEditor()` and `closeIncludeEditor()` functions
   - **Implementation**: Added reusable focus trap mechanism with keyboard navigation (Tab/Shift+Tab cycling, Escape to close), automatic focus on first form field, and focus restoration to triggering element. Updated all four modal functions (openIncludeEditor, closeIncludeEditor, showValidationReport, closeValidationReport)
 
-- [ ] **Add keyboard navigation for drag-and-drop** ([#18](https://github.com/MattCordell/Stoker/issues/18))
+✅ ~~**Add keyboard navigation for drag-and-drop**~~ ([#18](https://github.com/MattCordell/Stoker/issues/18)) **COMPLETED**
   - Add up/down arrow buttons for reordering copyright notices
   - Add up/down arrow buttons for reordering include blocks
   - Ensures keyboard-only users can reorder items
+  - **Implementation**: Added up/down arrow buttons (↑↓) next to each draggable item with smart boundary detection (first item can't move up, last can't move down). Buttons are keyboard accessible, work alongside existing drag-and-drop, and include full ARIA labels for screen readers. Added 4 helper functions (moveCopyrightUp/Down, moveIncludeBlockUp/Down) and modified both render functions
 
 ### Performance Optimization
 
