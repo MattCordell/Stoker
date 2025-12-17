@@ -3099,10 +3099,28 @@
 
             try {
                 const text = await file.text();
+
+                // Validate content is not empty/whitespace-only
+                if (!text.trim()) {
+                    showNotification('File is empty', 'error');
+                    console.error('Attempted to load empty code list file:', file.name);
+                    event.target.value = '';
+                    return;
+                }
+
+                // Load content into textarea
                 document.getElementById('modalCodeListInput').value = text;
-                showNotification('Code list loaded!');
+
+                // Parse to get code count for user feedback
+                const codes = parseCodeList(text);
+                const codeCount = codes.length;
+
+                // Provide informative success message
+                showNotification(`Code list loaded: ${file.name} (${codeCount} code${codeCount !== 1 ? 's' : ''})`);
+
             } catch (err) {
                 showNotification('Failed to read file', 'error');
+                console.error('Error loading code list file:', file.name, err);
             }
 
             event.target.value = '';
