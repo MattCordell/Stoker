@@ -1,4 +1,4 @@
-name: Deploy to Netlify (Preview)
+name: Deploy to Netlify
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - '!main'     # Except main (that goes to GitHub Pages)
 
 jobs:
-  deploy-preview:
+  deploy-netlify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,7 +17,7 @@ jobs:
         uses: nwtgck/actions-netlify@v2.1
         with:
           publish-dir: '.'
-          production-deploy: false
+          production-deploy: ${{ github.ref == 'refs/heads/develop' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions - ${{ github.event.head_commit.message }}"
           enable-pull-request-comment: true
