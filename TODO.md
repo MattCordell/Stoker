@@ -67,11 +67,11 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
   - Reduces distracting warnings while user is still typing
   - **Implementation**: Changed name and version fields from oninput to onblur event handlers. Validation now triggers only when user leaves the field (blur event) rather than on every keystroke. This provides a much smoother typing experience while still providing immediate validation feedback once the user moves to the next field
 
-- [ ] **Add diff view for loaded resources** ([#43](https://github.com/MattCordell/Stoker/issues/43))
+✅ ~~**Add diff view for loaded resources**~~ ([#43](https://github.com/MattCordell/Stoker/issues/43)) **COMPLETED**
   - Show comparison between original loaded resource and current edited version
   - Particularly useful for legacy resources not authored using Stoker
   - Helps identify atypical copyright notices or other anomalies
-  - Implementation: side-by-side or inline diff view with add/remove/modify highlighting
+  - **Implementation**: Modal dialog with hybrid view: summary of changes (modified/added/removed counts), expandable field-by-field comparison with original/current values, and expandable side-by-side full JSON comparison. Deep recursive comparison algorithm handles all field types including nested objects and arrays. All differences shown without filtering. Includes focus management, keyboard navigation, and proper ARIA labels for accessibility
 
 ---
 
