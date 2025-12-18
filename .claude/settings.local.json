@@ -3,7 +3,8 @@
     "allow": [
       "Bash(gh issue create:*)",
       "Bash(gh issue view:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(gh issue list:*)"
     ]
   }
 }
