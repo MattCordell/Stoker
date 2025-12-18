@@ -63,41 +63,60 @@ git push origin main
 
 Check the "Actions" tab on GitHub to see the deployment progress.
 
-**Test Preview Deployment:**
+**Test Development Deployment (Netlify Production):**
 ```bash
-# Push to any other branch
-git checkout -b test-deployment
+# Push to develop branch
+git checkout develop
 git add .
-git commit -m "Test preview deployment"
-git push origin test-deployment
+git commit -m "Test development deployment"
+git push origin develop
 ```
 
+This will deploy to the clean URL: `https://stoker-dev.netlify.app/`
+
+**Test Feature Branch Deployment (Netlify Preview):**
+```bash
+# Push to any other branch
+git checkout -b test-feature
+git add .
+git commit -m "Test preview deployment"
+git push origin test-feature
+```
+
+This will deploy to: `https://test-feature--stoker-dev.netlify.app/`
+
 The Netlify deployment will:
-- Create a unique preview URL
-- Post a comment on commits with the preview link
+- Post a comment on commits with the deployment link
 - Show deployment status in GitHub Actions
 
 ## How It Works
 
-### Production (Main Branch)
+### Production (Main Branch) - Stable Release
 - Trigger: Push to `main` branch
 - Workflow: [.github/workflows/deploy-production.yml](.github/workflows/deploy-production.yml)
 - Destination: GitHub Pages
 - URL: `https://mattcordell.github.io/Stoker/`
 
-### Preview (Dev Branches)
-- Trigger: Push to any branch except `main`
+### Development (Develop Branch) - Latest Features
+- Trigger: Push to `develop` branch
 - Workflow: [.github/workflows/deploy-preview.yml](.github/workflows/deploy-preview.yml)
-- Destination: Netlify
-- URL: `https://[branch-name]--[site-name].netlify.app/`
+- Destination: Netlify (production deployment)
+- URL: `https://stoker-dev.netlify.app/` (clean URL!)
 
-## Netlify Preview URLs
+### Preview (Feature Branches)
+- Trigger: Push to any other branch
+- Workflow: [.github/workflows/deploy-preview.yml](.github/workflows/deploy-preview.yml)
+- Destination: Netlify (preview deployment)
+- URL: `https://[branch-name]--stoker-dev.netlify.app/`
 
-Each branch gets its own preview URL:
-- `high-priority-ux` → `https://high-priority-ux--stoker.netlify.app/`
-- `feature-xyz` → `https://feature-xyz--stoker.netlify.app/`
+## Netlify Deployment URLs
 
-The workflow will automatically comment on commits with the preview link.
+- **Develop branch**: `https://stoker-dev.netlify.app/` (production URL)
+- **Feature branches**: `https://[branch-name]--stoker-dev.netlify.app/` (preview URLs)
+  - Example: `high-priority-ux` → `https://high-priority-ux--stoker-dev.netlify.app/`
+  - Example: `feature-xyz` → `https://feature-xyz--stoker-dev.netlify.app/`
+
+The workflow will automatically comment on commits with the deployment link.
 
 ## Troubleshooting
 

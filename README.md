@@ -2,6 +2,12 @@
 
 **Stoker** is a web-based authoring tool for creating [FHIR R4 ValueSet](https://hl7.org/fhir/R4/valueset.html) resources. It provides an intuitive interface for healthcare terminology specialists and FHIR implementers to build, validate, and export ValueSet definitions without writing JSON by hand.
 
+## Live Deployments
+
+- **Production (Stable)**: [https://mattcordell.github.io/Stoker/](https://mattcordell.github.io/Stoker/)
+- **Development (Latest Features)**: [https://stoker-dev.netlify.app/](https://stoker-dev.netlify.app/)
+- **Feature Branches**: `https://[branch-name]--stoker-dev.netlify.app/`
+
 ## Purpose
 
 Creating FHIR ValueSet resources typically requires manual JSON editing and deep knowledge of the FHIR specification. Stoker simplifies this process by providing a form-based interface where users can:
