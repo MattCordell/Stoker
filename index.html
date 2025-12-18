@@ -892,7 +892,7 @@
                         Name <span class="label-hint">(PascalCase, no spaces)</span>
                         <span id="nameCharCount" class="label-hint"></span>
                     </label>
-                    <input type="text" id="name" placeholder="e.g., AdverseReactionAgent" oninput="validateNameField()">
+                    <input type="text" id="name" placeholder="e.g., AdverseReactionAgent" onblur="validateNameField()">
                     <div id="nameValidationWarning" style="display: none; margin-top: 0.25rem;"></div>
                 </div>
 
@@ -909,7 +909,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="version">Version</label>
-                        <input type="text" id="version" value="1.0.0" placeholder="e.g., 1.0.0" oninput="validateNameField()">
+                        <input type="text" id="version" value="1.0.0" placeholder="e.g., 1.0.0" onblur="validateNameField()">
                     </div>
 
                     <div class="form-group">
