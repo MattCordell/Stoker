@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FHIR ValueSet Creator</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
         :root {
             --primary: #2563eb;
@@ -848,6 +849,181 @@
             color: var(--text-muted);
             margin-top: 1rem;
         }
+
+        /* Diff View Styles */
+        .diff-summary {
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .diff-summary-counts {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .diff-count {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .diff-count-modified {
+            color: var(--warning);
+        }
+
+        .diff-count-added {
+            color: var(--success);
+        }
+
+        .diff-count-removed {
+            color: var(--error);
+        }
+
+        .diff-section {
+            margin-bottom: 1rem;
+        }
+
+        .diff-section-header {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .diff-section-header:hover {
+            background: color-mix(in srgb, var(--primary) 10%, var(--bg));
+        }
+
+        .diff-section-icon {
+            transition: transform 0.2s;
+        }
+
+        .diff-section-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .diff-section-content {
+            margin-top: 0.5rem;
+        }
+
+        .diff-section-content.collapsed {
+            display: none;
+        }
+
+        .diff-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            border-left: 3px solid;
+        }
+
+        .diff-item-modified {
+            border-left-color: var(--warning);
+            background: color-mix(in srgb, var(--warning) 10%, var(--card-bg));
+        }
+
+        .diff-item-added {
+            border-left-color: var(--success);
+            background: color-mix(in srgb, var(--success) 10%, var(--card-bg));
+        }
+
+        .diff-item-removed {
+            border-left-color: var(--error);
+            background: color-mix(in srgb, var(--error) 10%, var(--card-bg));
+        }
+
+        .diff-path {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-size: 0.8125rem;
+        }
+
+        .diff-value {
+            padding: 0.5rem;
+            background: var(--json-bg);
+            border-radius: 3px;
+            margin: 0.25rem 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .diff-value-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .diff-value-old .diff-value-label {
+            color: var(--error);
+        }
+
+        .diff-value-new .diff-value-label {
+            color: var(--success);
+        }
+
+        .diff-empty-state {
+            padding: 3rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .diff-empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .diff-json-comparison {
+            margin-top: 1rem;
+        }
+
+        .diff-json-panes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .diff-json-pane {
+            background: var(--json-bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .diff-json-pane-header {
+            padding: 0.5rem 0.75rem;
+            background: var(--bg);
+            font-weight: 600;
+            font-size: 0.8125rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .diff-json-pane-content {
+            padding: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -892,7 +1068,7 @@
                         Name <span class="label-hint">(PascalCase, no spaces)</span>
                         <span id="nameCharCount" class="label-hint"></span>
                     </label>
-                    <input type="text" id="name" placeholder="e.g., AdverseReactionAgent" oninput="validateNameField()">
+                    <input type="text" id="name" placeholder="e.g., AdverseReactionAgent" onblur="validateNameField()">
                     <div id="nameValidationWarning" style="display: none; margin-top: 0.25rem;"></div>
                 </div>
 
@@ -909,7 +1085,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="version">Version</label>
-                        <input type="text" id="version" value="1.0.0" placeholder="e.g., 1.0.0" oninput="validateNameField()">
+                        <input type="text" id="version" value="1.0.0" placeholder="e.g., 1.0.0" onblur="validateNameField()">
                     </div>
 
                     <div class="form-group">
@@ -1036,6 +1212,9 @@
                     <button id="validateBtn" class="btn btn-info" onclick="showValidationReport()" aria-label="Validate ValueSet">
                         <span id="validateIcon">✓</span> Validate
                         <span id="validationBadge" class="validation-badge" style="display: none;"></span>
+                    </button>
+                    <button id="diffBtn" class="btn btn-info" onclick="showDiffReport()" aria-label="View differences from loaded file" disabled>
+                        📋 View Diff
                     </button>
                 </div>
             </div>
@@ -1164,6 +1343,23 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeValidationReport()">Close</button>
                 <button class="btn btn-primary" onclick="closeValidationReport(); downloadJSON();">Download Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diff Report Modal -->
+    <div id="diffReportModal" class="modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeDiffReport()"></div>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="diffReportTitle" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 id="diffReportTitle">Diff: Original vs Current</h3>
+                <button class="modal-close" onclick="closeDiffReport()" aria-label="Close dialog" title="Close">&times;</button>
+            </div>
+            <div class="modal-body" id="diffReportBody">
+                <!-- Diff report content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDiffReport()">Close</button>
             </div>
         </div>
     </div>
@@ -1332,6 +1528,7 @@
         // Global focus trap instances
         let includeEditorFocusTrap = null;
         let validationReportFocusTrap = null;
+        let diffReportFocusTrap = null;
 
         // Configuration data
         let publishers = [];
@@ -1342,12 +1539,19 @@
         let includeBlocks = []; // Array of include configuration objects
         let currentEditingIncludeId = null; // ID of include being edited in modal
 
+        // Track unsaved changes
+        let hasUnsavedChanges = false;
+
+        // Store original loaded ValueSet for diff comparison
+        let originalLoadedValueSet = null;
+
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             await loadConfig();
             setDefaultDate();
             updatePreview();
             setupEventListeners();
+            markFormAsClean(); // Start with no unsaved changes
         });
 
         async function loadConfig() {
@@ -1460,12 +1664,14 @@
             renderCopyrightList();
             select.value = '';
             updatePreview();
+            markFormAsDirty();
         }
 
         function removeCopyrightNotice(copyrightId) {
             selectedCopyrights = selectedCopyrights.filter(id => id !== copyrightId);
             renderCopyrightList();
             updatePreview();
+            markFormAsDirty();
         }
 
         function moveCopyrightNotice(fromIndex, toIndex) {
@@ -1474,6 +1680,7 @@
             selectedCopyrights.splice(toIndex, 0, item);
             renderCopyrightList();
             updatePreview();
+            markFormAsDirty();
         }
 
         function moveCopyrightUp(index) {
@@ -1733,6 +1940,7 @@
             renderIncludeBlocksList();
             closeIncludeEditor();
             updatePreview();
+            markFormAsDirty();
         }
 
         function extractIncludeData(type) {
@@ -1866,6 +2074,7 @@
             includeBlocks = includeBlocks.filter(i => i.id !== includeId);
             renderIncludeBlocksList();
             updatePreview();
+            markFormAsDirty();
         }
 
         function moveIncludeBlock(fromIndex, toIndex) {
@@ -1874,6 +2083,7 @@
             includeBlocks.splice(toIndex, 0, item);
             renderIncludeBlocksList();
             updatePreview();
+            markFormAsDirty();
         }
 
         function moveIncludeBlockUp(index) {
@@ -2067,10 +2277,28 @@
             const validationContent = validationModal.querySelector('[role="dialog"]');
             validationReportFocusTrap = createFocusTrap(validationModal, validationContent, closeValidationReport);
 
-            // Update preview on any input change
+            const diffModal = document.getElementById('diffReportModal');
+            const diffContent = diffModal.querySelector('[role="dialog"]');
+            diffReportFocusTrap = createFocusTrap(diffModal, diffContent, closeDiffReport);
+
+            // Warn before leaving page with unsaved changes
+            window.addEventListener('beforeunload', (e) => {
+                if (hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.returnValue = ''; // Required for Chrome
+                }
+            });
+
+            // Update preview on any input change and mark form as dirty
             document.querySelectorAll('input, textarea, select').forEach(el => {
-                el.addEventListener('input', debouncedUpdatePreview);
-                el.addEventListener('change', updatePreview);
+                el.addEventListener('input', () => {
+                    markFormAsDirty();
+                    debouncedUpdatePreview();
+                });
+                el.addEventListener('change', () => {
+                    markFormAsDirty();
+                    updatePreview();
+                });
             });
 
             // Explicit listeners for key fields to ensure they trigger updates
@@ -2100,6 +2328,15 @@
                 document.getElementById('modalEntireSystemUrl').style.display =
                     e.target.value === 'custom' ? 'block' : 'none';
             });
+        }
+
+        // Unsaved changes tracking
+        function markFormAsDirty() {
+            hasUnsavedChanges = true;
+        }
+
+        function markFormAsClean() {
+            hasUnsavedChanges = false;
         }
 
         function suggestName() {
@@ -2430,6 +2667,81 @@
             }
 
             modal.style.display = 'none';
+        }
+
+        function showDiffReport() {
+            // Check if original file was loaded
+            if (!originalLoadedValueSet) {
+                showNotification('No file loaded to compare against', 'warning');
+                return;
+            }
+
+            const modal = document.getElementById('diffReportModal');
+            const body = document.getElementById('diffReportBody');
+
+            // Generate current ValueSet
+            const currentValueSet = generateValueSet();
+
+            // Compare original vs current
+            const differences = compareValueSets(originalLoadedValueSet, currentValueSet);
+
+            // Render hybrid view: summary + details + full JSON comparison
+            let html = '';
+
+            // Summary section
+            html += generateDiffSummary(differences);
+
+            // Field-by-field details (only if there are differences)
+            if (differences.modified.length > 0 || differences.added.length > 0 || differences.removed.length > 0) {
+                html += renderDiffDetails(differences);
+
+                // Full JSON comparison (collapsed by default)
+                html += renderFullJsonComparison(originalLoadedValueSet, currentValueSet);
+            } else {
+                // No changes - show empty state
+                html += `
+                    <div class="diff-empty-state">
+                        <div class="diff-empty-state-icon">✓</div>
+                        <p><strong>No differences detected</strong></p>
+                        <p style="margin-top: 0.5rem; color: var(--text-muted);">
+                            The current form matches the loaded resource exactly.
+                        </p>
+                    </div>
+                `;
+            }
+
+            body.innerHTML = html;
+            modal.style.display = 'flex';
+
+            // Activate focus trap
+            if (diffReportFocusTrap) {
+                diffReportFocusTrap.activate();
+            }
+        }
+
+        function closeDiffReport() {
+            const modal = document.getElementById('diffReportModal');
+
+            // Deactivate focus trap
+            if (diffReportFocusTrap) {
+                diffReportFocusTrap.deactivate();
+            }
+
+            modal.style.display = 'none';
+        }
+
+        function enableDiffButton() {
+            const diffBtn = document.getElementById('diffBtn');
+            if (diffBtn) {
+                diffBtn.disabled = false;
+            }
+        }
+
+        function disableDiffButton() {
+            const diffBtn = document.getElementById('diffBtn');
+            if (diffBtn) {
+                diffBtn.disabled = true;
+            }
         }
 
         function renderValidationReport(results) {
@@ -2794,6 +3106,272 @@
             return true;
         }
 
+        // Diff comparison functions
+        function compareValueSets(original, current) {
+            const differences = {
+                added: [],
+                removed: [],
+                modified: []
+            };
+
+            function compare(obj1, obj2, path = '') {
+                // Get all keys from both objects
+                const keys1 = obj1 && typeof obj1 === 'object' ? Object.keys(obj1) : [];
+                const keys2 = obj2 && typeof obj2 === 'object' ? Object.keys(obj2) : [];
+                const allKeys = new Set([...keys1, ...keys2]);
+
+                allKeys.forEach(key => {
+                    const currentPath = path ? `${path}.${key}` : key;
+                    const val1 = obj1?.[key];
+                    const val2 = obj2?.[key];
+
+                    // Field exists in current but not in original (added)
+                    if (val1 === undefined && val2 !== undefined) {
+                        differences.added.push({
+                            path: currentPath,
+                            value: val2
+                        });
+                    }
+                    // Field exists in original but not in current (removed)
+                    else if (val1 !== undefined && val2 === undefined) {
+                        differences.removed.push({
+                            path: currentPath,
+                            value: val1
+                        });
+                    }
+                    // Both exist, check if they're different
+                    else if (val1 !== undefined && val2 !== undefined) {
+                        // Handle arrays
+                        if (Array.isArray(val1) && Array.isArray(val2)) {
+                            const json1 = JSON.stringify(val1);
+                            const json2 = JSON.stringify(val2);
+                            if (json1 !== json2) {
+                                differences.modified.push({
+                                    path: currentPath,
+                                    oldValue: val1,
+                                    newValue: val2,
+                                    isArray: true
+                                });
+                            }
+                        }
+                        // Handle objects (recurse)
+                        else if (typeof val1 === 'object' && val1 !== null &&
+                                 typeof val2 === 'object' && val2 !== null &&
+                                 !Array.isArray(val1) && !Array.isArray(val2)) {
+                            compare(val1, val2, currentPath);
+                        }
+                        // Handle primitives
+                        else if (val1 !== val2) {
+                            differences.modified.push({
+                                path: currentPath,
+                                oldValue: val1,
+                                newValue: val2
+                            });
+                        }
+                    }
+                });
+            }
+
+            compare(original, current);
+            return differences;
+        }
+
+        function formatPath(path) {
+            // Convert dot notation to readable format
+            // Example: "compose.include[0].system" → "Compose > Include[0] > System"
+            return path
+                .split('.')
+                .map(part => {
+                    // Capitalize first letter
+                    return part.charAt(0).toUpperCase() + part.slice(1);
+                })
+                .join(' > ');
+        }
+
+        function formatValue(value, maxLength = 200) {
+            if (value === null) {
+                return 'null';
+            }
+            if (value === undefined) {
+                return 'undefined';
+            }
+            if (typeof value === 'object') {
+                const json = JSON.stringify(value, null, 2);
+                if (json.length > maxLength) {
+                    return json.substring(0, maxLength) + '...';
+                }
+                return json;
+            }
+            const str = String(value);
+            if (str.length > maxLength) {
+                return str.substring(0, maxLength) + '...';
+            }
+            return str;
+        }
+
+        // Diff rendering functions
+        function generateDiffSummary(differences) {
+            const modifiedCount = differences.modified.length;
+            const addedCount = differences.added.length;
+            const removedCount = differences.removed.length;
+            const totalChanges = modifiedCount + addedCount + removedCount;
+
+            if (totalChanges === 0) {
+                return `
+                    <div class="diff-summary">
+                        <strong>No differences detected</strong>
+                        <p style="margin-top: 0.5rem; color: var(--text-muted);">
+                            The current form matches the loaded resource.
+                        </p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="diff-summary">
+                    <strong>${totalChanges} change${totalChanges !== 1 ? 's' : ''} detected</strong>
+                    <div class="diff-summary-counts">
+                        ${modifiedCount > 0 ? `
+                            <div class="diff-count diff-count-modified">
+                                <span>⚠</span>
+                                <span>${modifiedCount} modified</span>
+                            </div>
+                        ` : ''}
+                        ${addedCount > 0 ? `
+                            <div class="diff-count diff-count-added">
+                                <span>+</span>
+                                <span>${addedCount} added</span>
+                            </div>
+                        ` : ''}
+                        ${removedCount > 0 ? `
+                            <div class="diff-count diff-count-removed">
+                                <span>-</span>
+                                <span>${removedCount} removed</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDiffDetails(differences) {
+            const { modified, added, removed } = differences;
+            let html = '';
+
+            // Modified section
+            if (modified.length > 0) {
+                html += `
+                    <div class="diff-section">
+                        <div class="diff-section-header" onclick="toggleDiffSection('modified')">
+                            <span class="diff-section-icon" id="modified-icon">▼</span>
+                            <span>⚠ Modified Fields (${modified.length})</span>
+                        </div>
+                        <div class="diff-section-content" id="modified-content">
+                            ${modified.map(item => `
+                                <div class="diff-item diff-item-modified">
+                                    <div class="diff-path">${formatPath(item.path)}</div>
+                                    <div class="diff-value-old">
+                                        <div class="diff-value-label">Original</div>
+                                        <div class="diff-value">${formatValue(item.oldValue)}</div>
+                                    </div>
+                                    <div class="diff-value-new">
+                                        <div class="diff-value-label">Current</div>
+                                        <div class="diff-value">${formatValue(item.newValue)}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Added section
+            if (added.length > 0) {
+                html += `
+                    <div class="diff-section">
+                        <div class="diff-section-header" onclick="toggleDiffSection('added')">
+                            <span class="diff-section-icon" id="added-icon">▼</span>
+                            <span>+ Added Fields (${added.length})</span>
+                        </div>
+                        <div class="diff-section-content" id="added-content">
+                            ${added.map(item => `
+                                <div class="diff-item diff-item-added">
+                                    <div class="diff-path">${formatPath(item.path)}</div>
+                                    <div class="diff-value-new">
+                                        <div class="diff-value-label">New Value</div>
+                                        <div class="diff-value">${formatValue(item.value)}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Removed section
+            if (removed.length > 0) {
+                html += `
+                    <div class="diff-section">
+                        <div class="diff-section-header" onclick="toggleDiffSection('removed')">
+                            <span class="diff-section-icon" id="removed-icon">▼</span>
+                            <span>- Removed Fields (${removed.length})</span>
+                        </div>
+                        <div class="diff-section-content" id="removed-content">
+                            ${removed.map(item => `
+                                <div class="diff-item diff-item-removed">
+                                    <div class="diff-path">${formatPath(item.path)}</div>
+                                    <div class="diff-value-old">
+                                        <div class="diff-value-label">Original Value</div>
+                                        <div class="diff-value">${formatValue(item.value)}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        function renderFullJsonComparison(original, current) {
+            const originalJson = JSON.stringify(original, null, 2);
+            const currentJson = JSON.stringify(current, null, 2);
+
+            return `
+                <div class="diff-json-comparison">
+                    <div class="diff-section">
+                        <div class="diff-section-header" onclick="toggleDiffSection('json-comparison')">
+                            <span class="diff-section-icon collapsed" id="json-comparison-icon">▼</span>
+                            <span>Full JSON Comparison</span>
+                        </div>
+                        <div class="diff-section-content collapsed" id="json-comparison-content">
+                            <div class="diff-json-panes">
+                                <div class="diff-json-pane">
+                                    <div class="diff-json-pane-header">Original JSON</div>
+                                    <div class="diff-json-pane-content">${syntaxHighlight(originalJson)}</div>
+                                </div>
+                                <div class="diff-json-pane">
+                                    <div class="diff-json-pane-header">Current JSON</div>
+                                    <div class="diff-json-pane-content">${syntaxHighlight(currentJson)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleDiffSection(sectionId) {
+            const content = document.getElementById(`${sectionId}-content`);
+            const icon = document.getElementById(`${sectionId}-icon`);
+
+            if (content && icon) {
+                content.classList.toggle('collapsed');
+                icon.classList.toggle('collapsed');
+            }
+        }
+
         function updatePreview() {
             const valueSet = generateValueSet();
             const json = JSON.stringify(valueSet, null, 2);
@@ -2840,6 +3418,7 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             showNotification('ValueSet downloaded successfully!');
+            markFormAsClean(); // Clear unsaved changes flag after successful download
         }
 
         function copyToClipboard() {
@@ -2889,6 +3468,9 @@
                 const text = await file.text();
                 const valueSet = JSON.parse(text);
 
+                // Store original for diff comparison (deep clone)
+                originalLoadedValueSet = JSON.parse(JSON.stringify(valueSet));
+
                 populateFormFromValueSet(valueSet);
                 document.getElementById('loadedFileName').textContent = `Loaded: ${file.name}`;
 
@@ -2907,6 +3489,12 @@
 
                 // Trigger validation to show warnings
                 validateNameField();
+
+                // Clear unsaved changes flag after loading file
+                markFormAsClean();
+
+                // Enable diff button since we now have an original to compare against
+                enableDiffButton();
 
             } catch (err) {
                 showNotification('Failed to parse JSON file', 'error');
@@ -3179,6 +3767,14 @@
             setDefaultDate();
             updatePreview();
             showNotification('Form cleared');
+
+            // Clear original loaded ValueSet
+            originalLoadedValueSet = null;
+
+            // Disable diff button since there's no original to compare against
+            disableDiffButton();
+
+            markFormAsClean(); // Clear unsaved changes flag after clearing form
         }
     </script>
 </body>
