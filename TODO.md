@@ -95,7 +95,7 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
   - Regex substring limit (100 chars) with explanatory comment
   - **Implementation**: Extended FHIR_CONSTANTS object with UI/UX constants: NOTIFICATION_DURATION (3000ms), ECL_SUMMARY_LENGTH (50 chars), COPYRIGHT_PATTERN_MATCH_LENGTH (100 chars), COPYRIGHT_FALLBACK_LENGTH (50 chars), FORMAT_VALUE_DEFAULT_LENGTH (200 chars). Replaced all hardcoded magic numbers with named constants. Note: PREVIEW_DEBOUNCE_DELAY and MAX_FILE_SIZE were already properly extracted.
 
-- [ ] **Organize JavaScript with section headers** ([#27](https://github.com/MattCordell/Stoker/issues/27))
+✅ ~~**Organize JavaScript with section headers**~~ ([#27](https://github.com/MattCordell/Stoker/issues/27)) **COMPLETED**
   - Add clear comment headers for logical sections:
     - Configuration & State
     - Initialization
@@ -108,6 +108,7 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
     - File Operations
     - UI Helpers
     - Theme Management
+  - **Implementation**: Added 17 comprehensive section headers throughout 2,413 lines of JavaScript code: THEME MANAGEMENT, CONFIGURATION CONSTANTS, FOCUS MANAGEMENT & ACCESSIBILITY, APPLICATION STATE, INITIALIZATION, PUBLISHER & COPYRIGHT CONFIGURATION, COPYRIGHT MANAGEMENT, INCLUDE BLOCK MANAGEMENT, FORM VALIDATION, FHIR VALUESET GENERATION, DIFF ENGINE, PREVIEW & UI UPDATES, PREVIEW DEBOUNCING, FILE SIZE VALIDATION, FILE I/O OPERATIONS, UI UTILITIES & HELPERS, and FILE LOADING. Dramatically improves code navigation and maintainability.
 
 - [ ] **Consolidate global state** ([#28](https://github.com/MattCordell/Stoker/issues/28))
   - Create `AppState` object to wrap:
@@ -121,10 +122,11 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
 
 ### Code Quality
 
-- [ ] **Reduce duplicate code** ([#29](https://github.com/MattCordell/Stoker/issues/29))
+✅ ~~**Reduce duplicate code**~~ ([#29](https://github.com/MattCordell/Stoker/issues/29)) **COMPLETED**
   - Create unified `setModalSystemSelect(selectId, customInputId, system)` function
   - Replace `setModalCodeSystem()`, `setModalFilterSystem()`, `setModalEntireSystem()`
   - Also replace `setCodeSystem()`, `setFilterSystem()`, `setEntireSystem()`
+  - **Implementation**: Created unified setSystemSelect(selectId, customInputId, system) helper function that handles both standard and custom code system selection logic. Replaced 6 duplicate functions (setModalCodeSystem, setModalFilterSystem, setModalEntireSystem, setCodeSystem, setFilterSystem, setEntireSystem) with simple wrapper functions that call the unified helper. Reduced code from 102 lines to 28 lines (73% reduction) while maintaining identical functionality.
 
 ### Security
 

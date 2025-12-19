@@ -1369,7 +1369,10 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        // Theme handling
+        // =============================================================================
+        // THEME MANAGEMENT
+        // =============================================================================
+
         function setTheme(theme) {
             localStorage.setItem('theme', theme);
             applyTheme(theme);
@@ -1430,7 +1433,10 @@
             FORMAT_VALUE_DEFAULT_LENGTH: 200       // characters for value truncation
         };
 
-        // Focus management for modals
+        // =============================================================================
+        // FOCUS MANAGEMENT & ACCESSIBILITY
+        // =============================================================================
+
         // Find all focusable elements within a container
         function getFocusableElements(container) {
             const focusableSelectors = [
@@ -1554,6 +1560,10 @@
             };
         }
 
+        // =============================================================================
+        // APPLICATION STATE
+        // =============================================================================
+
         // Global focus trap instances
         let includeEditorFocusTrap = null;
         let validationReportFocusTrap = null;
@@ -1574,7 +1584,10 @@
         // Store original loaded ValueSet for diff comparison
         let originalLoadedValueSet = null;
 
-        // Initialize
+        // =============================================================================
+        // INITIALIZATION
+        // =============================================================================
+
         document.addEventListener('DOMContentLoaded', async () => {
             await loadConfig();
             setDefaultDate();
@@ -1582,6 +1595,10 @@
             setupEventListeners();
             markFormAsClean(); // Start with no unsaved changes
         });
+
+        // =============================================================================
+        // PUBLISHER & COPYRIGHT CONFIGURATION
+        // =============================================================================
 
         async function loadConfig() {
             try {
@@ -1673,7 +1690,10 @@
             document.getElementById('date').value = today;
         }
 
-        // Copyright list management
+        // =============================================================================
+        // COPYRIGHT MANAGEMENT
+        // =============================================================================
+
         function addCopyrightNotice() {
             const select = document.getElementById('copyright');
             const copyrightId = select.value;
@@ -1877,6 +1897,10 @@
             typeSelect.value = '';
         }
 
+        // =============================================================================
+        // INCLUDE BLOCK MANAGEMENT
+        // =============================================================================
+
         function openIncludeEditor(type, includeId = null) {
             const modal = document.getElementById('includeEditorModal');
             const title = document.getElementById('includeEditorTitle');
@@ -2048,40 +2072,32 @@
             showModalComposeSection(type);
         }
 
-        function setModalCodeSystem(system) {
-            const select = document.getElementById('modalCodeSystem');
+        // Unified system select helper function
+        function setSystemSelect(selectId, customInputId, system) {
+            const select = document.getElementById(selectId);
+            const customInput = document.getElementById(customInputId);
             const options = Array.from(select.options).map(o => o.value);
+
             if (options.includes(system)) {
                 select.value = system;
+                customInput.style.display = 'none';
             } else {
                 select.value = 'custom';
-                document.getElementById('modalCustomCodeSystem').value = system;
-                document.getElementById('modalCustomCodeSystem').style.display = 'block';
+                customInput.value = system;
+                customInput.style.display = 'block';
             }
+        }
+
+        function setModalCodeSystem(system) {
+            setSystemSelect('modalCodeSystem', 'modalCustomCodeSystem', system);
         }
 
         function setModalFilterSystem(system) {
-            const select = document.getElementById('modalFilterSystem');
-            const options = Array.from(select.options).map(o => o.value);
-            if (options.includes(system)) {
-                select.value = system;
-            } else {
-                select.value = 'custom';
-                document.getElementById('modalCustomFilterSystem').value = system;
-                document.getElementById('modalCustomFilterSystem').style.display = 'block';
-            }
+            setSystemSelect('modalFilterSystem', 'modalCustomFilterSystem', system);
         }
 
         function setModalEntireSystem(system) {
-            const select = document.getElementById('modalEntireSystemSelect');
-            const options = Array.from(select.options).map(o => o.value);
-            if (options.includes(system)) {
-                select.value = system;
-            } else {
-                select.value = 'custom';
-                document.getElementById('modalEntireSystemUrl').value = system;
-                document.getElementById('modalEntireSystemUrl').style.display = 'block';
-            }
+            setSystemSelect('modalEntireSystemSelect', 'modalEntireSystemUrl', system);
         }
 
         function clearIncludeEditorForms() {
@@ -2377,6 +2393,10 @@
             validateNameField();
             updatePreview();
         }
+
+        // =============================================================================
+        // FORM VALIDATION
+        // =============================================================================
 
         function validateNameField() {
             const nameInput = document.getElementById('name');
@@ -2698,6 +2718,10 @@
             modal.style.display = 'none';
         }
 
+        // =============================================================================
+        // DIFF ENGINE
+        // =============================================================================
+
         function showDiffReport() {
             // Check if original file was loaded
             if (!originalLoadedValueSet) {
@@ -2933,6 +2957,10 @@
             updatePreview();
         }
 
+        // =============================================================================
+        // FHIR VALUESET GENERATION
+        // =============================================================================
+
         function generateValueSet() {
             const name = document.getElementById('name').value || 'ExampleValueSet';
             const version = document.getElementById('version').value || '1.0.0';
@@ -3101,7 +3129,10 @@
             });
         }
 
-        // Debounce configuration for preview updates
+        // =============================================================================
+        // PREVIEW DEBOUNCING
+        // =============================================================================
+
         let updatePreviewTimeoutId = null;
         const PREVIEW_DEBOUNCE_DELAY = 200; // milliseconds
 
@@ -3118,7 +3149,10 @@
             }, PREVIEW_DEBOUNCE_DELAY);
         }
 
-        // File size validation
+        // =============================================================================
+        // FILE SIZE VALIDATION
+        // =============================================================================
+
         const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
         function validateFileSize(file, maxSizeBytes) {
@@ -3401,6 +3435,10 @@
             }
         }
 
+        // =============================================================================
+        // PREVIEW & UI UPDATES
+        // =============================================================================
+
         function updatePreview() {
             const valueSet = generateValueSet();
             const json = JSON.stringify(valueSet, null, 2);
@@ -3433,6 +3471,10 @@
                     return `<span class="${cls}">${match}</span>`;
                 });
         }
+
+        // =============================================================================
+        // FILE I/O OPERATIONS
+        // =============================================================================
 
         function downloadJSON() {
             const valueSet = generateValueSet();
@@ -3468,6 +3510,10 @@
             });
         }
 
+        // =============================================================================
+        // UI UTILITIES & HELPERS
+        // =============================================================================
+
         function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -3483,6 +3529,10 @@
                 notification.classList.remove('show');
             }, FHIR_CONSTANTS.NOTIFICATION_DURATION);
         }
+
+        // =============================================================================
+        // FILE LOADING
+        // =============================================================================
 
         async function loadExistingValueSet(event) {
             const file = event.target.files[0];
@@ -3697,39 +3747,15 @@
         }
 
         function setCodeSystem(system) {
-            const select = document.getElementById('codeSystem');
-            const options = Array.from(select.options).map(o => o.value);
-            if (options.includes(system)) {
-                select.value = system;
-            } else {
-                select.value = 'custom';
-                document.getElementById('customCodeSystem').value = system;
-                document.getElementById('customCodeSystem').style.display = 'block';
-            }
+            setSystemSelect('codeSystem', 'customCodeSystem', system);
         }
 
         function setFilterSystem(system) {
-            const select = document.getElementById('filterSystem');
-            const options = Array.from(select.options).map(o => o.value);
-            if (options.includes(system)) {
-                select.value = system;
-            } else {
-                select.value = 'custom';
-                document.getElementById('customFilterSystem').value = system;
-                document.getElementById('customFilterSystem').style.display = 'block';
-            }
+            setSystemSelect('filterSystem', 'customFilterSystem', system);
         }
 
         function setEntireSystem(system) {
-            const select = document.getElementById('entireSystemSelect');
-            const options = Array.from(select.options).map(o => o.value);
-            if (options.includes(system)) {
-                select.value = system;
-            } else {
-                select.value = 'custom';
-                document.getElementById('entireSystemUrl').value = system;
-                document.getElementById('entireSystemUrl').style.display = 'block';
-            }
+            setSystemSelect('entireSystemSelect', 'entireSystemUrl', system);
         }
 
         async function loadCodeListFile(event) {
