@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
     <title>FHIR ValueSet Creator</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
@@ -1401,6 +1403,33 @@
         // Initialize theme immediately to prevent flash
         initTheme();
 
+        // =============================================================================
+        // CONFIGURATION CONSTANTS
+        // =============================================================================
+
+        const FHIR_CONSTANTS = {
+            // FHIR URLs
+            SNOMED_CT_SYSTEM: 'http://snomed.info/sct',
+            LOINC_SYSTEM: 'http://loinc.org',
+            SHAREABLE_PROFILE: 'http://hl7.org/fhir/StructureDefinition/shareablevalueset',
+            NCTS_PROFILE: 'https://www.healthterminologies.gov.au/fhir/StructureDefinition/composed-value-set-4',
+            BASE_URL: 'https://healthterminologies.gov.au/fhir/ValueSet',
+            DATA_ABSENT_REASON_SYSTEM: 'http://terminology.hl7.org/CodeSystem/data-absent-reason',
+            IDENTIFIER_SYSTEM: 'urn:ietf:rfc:3986',
+
+            // Validation Limits
+            MAX_NAME_LENGTH: 254,
+            MAX_ID_LENGTH: 64,
+            NAME_PATTERN: /^[A-Z]([A-Za-z0-9_]){0,254}$/,
+
+            // UI/UX Constants
+            NOTIFICATION_DURATION: 3000,           // milliseconds
+            ECL_SUMMARY_LENGTH: 50,                // characters
+            COPYRIGHT_PATTERN_MATCH_LENGTH: 100,   // characters for regex performance
+            COPYRIGHT_FALLBACK_LENGTH: 50,         // characters for simple matching
+            FORMAT_VALUE_DEFAULT_LENGTH: 200       // characters for value truncation
+        };
+
         // Focus management for modals
         // Find all focusable elements within a container
         function getFocusableElements(container) {
@@ -2062,9 +2091,9 @@
             document.getElementById('modalFilterOp').value = '=';
             document.getElementById('modalFilterValue').value = '';
             document.getElementById('modalValueSetRefUrl').value = '';
-            document.getElementById('modalCodeSystem').value = 'http://snomed.info/sct';
-            document.getElementById('modalFilterSystem').value = 'http://snomed.info/sct';
-            document.getElementById('modalEntireSystemSelect').value = 'http://snomed.info/sct';
+            document.getElementById('modalCodeSystem').value = FHIR_CONSTANTS.SNOMED_CT_SYSTEM;
+            document.getElementById('modalFilterSystem').value = FHIR_CONSTANTS.SNOMED_CT_SYSTEM;
+            document.getElementById('modalEntireSystemSelect').value = FHIR_CONSTANTS.SNOMED_CT_SYSTEM;
             document.getElementById('modalCustomCodeSystem').style.display = 'none';
             document.getElementById('modalCustomFilterSystem').style.display = 'none';
             document.getElementById('modalEntireSystemUrl').style.display = 'none';
@@ -2209,7 +2238,7 @@
                 case 'codeList':
                     return `${data.system} - ${data.codes.length} code(s)`;
                 case 'ecl':
-                    return `constraint = ${data.expression.substring(0, 50)}${data.expression.length > 50 ? '...' : ''}`;
+                    return `constraint = ${data.expression.substring(0, FHIR_CONSTANTS.ECL_SUMMARY_LENGTH)}${data.expression.length > FHIR_CONSTANTS.ECL_SUMMARY_LENGTH ? '...' : ''}`;
                 case 'filter':
                     return `${data.system} | ${data.property} ${data.op} ${data.value}`;
                 case 'valueSetRef':
@@ -2364,13 +2393,13 @@
 
             if (name) {
                 // Validate PascalCase format: [A-Z]([A-Za-z0-9_]){0,254}
-                const namePattern = /^[A-Z]([A-Za-z0-9_]){0,254}$/;
+                const namePattern = FHIR_CONSTANTS.NAME_PATTERN;
                 if (!namePattern.test(name)) {
                     warnings.push('❌ Name must be PascalCase (start with capital, no spaces or special chars except _)');
                     hasError = true;
                     nameInput.classList.add('input-error');
-                } else if (name.length > 254) {
-                    warnings.push('❌ Name must not exceed 254 characters');
+                } else if (name.length > FHIR_CONSTANTS.MAX_NAME_LENGTH) {
+                    warnings.push(`❌ Name must not exceed ${FHIR_CONSTANTS.MAX_NAME_LENGTH} characters`);
                     hasError = true;
                     nameInput.classList.add('input-error');
                 }
@@ -2389,11 +2418,11 @@
                 const futureIdLength = futureId.length;
 
                 // Show character count
-                charCountSpan.textContent = `(ID: ${currentIdLength}/64 chars)`;
+                charCountSpan.textContent = `(ID: ${currentIdLength}/${FHIR_CONSTANTS.MAX_ID_LENGTH} chars)`;
 
                 // Check length constraints
-                if (currentIdLength > 64) {
-                    warnings.push(`❌ Current ID length (${currentIdLength}) exceeds 64 character limit`);
+                if (currentIdLength > FHIR_CONSTANTS.MAX_ID_LENGTH) {
+                    warnings.push(`❌ Current ID length (${currentIdLength}) exceeds ${FHIR_CONSTANTS.MAX_ID_LENGTH} character limit`);
                     hasError = true;
                     nameInput.classList.add('input-error');
                 } else if (futureIdLength > 63) {
@@ -2472,14 +2501,14 @@
 
             if (name) {
                 // Validate PascalCase format
-                const namePattern = /^[A-Z]([A-Za-z0-9_]){0,254}$/;
+                const namePattern = FHIR_CONSTANTS.NAME_PATTERN;
                 if (!namePattern.test(name)) {
                     results.errors.push('Name must be PascalCase format: start with capital letter, followed by alphanumeric characters or underscores only (no spaces or special characters)');
                 }
 
                 // Validate name length
-                if (name.length > 254) {
-                    results.errors.push('Name must not exceed 254 characters');
+                if (name.length > FHIR_CONSTANTS.MAX_NAME_LENGTH) {
+                    results.errors.push(`Name must not exceed ${FHIR_CONSTANTS.MAX_NAME_LENGTH} characters`);
                 }
 
                 // Calculate ID lengths
@@ -2490,8 +2519,8 @@
                     const futureId = `${kebabName}-${version}`;
 
                     // Hard limit check
-                    if (currentId.length > 64) {
-                        results.errors.push(`ID length (${currentId.length}) exceeds hard limit of 64 characters`);
+                    if (currentId.length > FHIR_CONSTANTS.MAX_ID_LENGTH) {
+                        results.errors.push(`ID length (${currentId.length}) exceeds hard limit of ${FHIR_CONSTANTS.MAX_ID_LENGTH} characters`);
                     } else {
                         // Recommended limit checks
                         if (futureId.length > 63) {
@@ -2605,8 +2634,8 @@
             // Add passed checks
             if (title) results.info.push('✓ Title is provided');
             if (name) {
-                const namePattern = /^[A-Z]([A-Za-z0-9_]){0,254}$/;
-                if (namePattern.test(name) && name.length <= 254) {
+                const namePattern = FHIR_CONSTANTS.NAME_PATTERN;
+                if (namePattern.test(name) && name.length <= FHIR_CONSTANTS.MAX_NAME_LENGTH) {
                     results.info.push('✓ Name conforms to PascalCase format');
                 }
             }
@@ -2923,7 +2952,7 @@
             const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
             const majorVersion = version.split('.')[0];
             const id = `${kebabName}-${majorVersion}`;
-            const url = `https://healthterminologies.gov.au/fhir/ValueSet/${kebabName}-${majorVersion}`;
+            const url = `${FHIR_CONSTANTS.BASE_URL}/${kebabName}-${majorVersion}`;
 
             // Build copyright from selected notices with " \n\n" separator (per authoring guide)
             let copyrightText = '';
@@ -2951,8 +2980,8 @@
                 id: id,
                 meta: {
                     profile: [
-                        'http://hl7.org/fhir/StructureDefinition/shareablevalueset',
-                        'https://healthterminologies.gov.au/fhir/StructureDefinition/composed-value-set-4'
+                        FHIR_CONSTANTS.SHAREABLE_PROFILE,
+                        FHIR_CONSTANTS.NCTS_PROFILE
                     ]
                 },
                 text: {
@@ -3022,7 +3051,7 @@
                     }
                     case 'ecl': {
                         compose.include.push({
-                            system: 'http://snomed.info/sct',
+                            system: FHIR_CONSTANTS.SNOMED_CT_SYSTEM,
                             filter: [{
                                 property: 'constraint',
                                 op: '=',
@@ -3188,7 +3217,7 @@
                 .join(' > ');
         }
 
-        function formatValue(value, maxLength = 200) {
+        function formatValue(value, maxLength = FHIR_CONSTANTS.FORMAT_VALUE_DEFAULT_LENGTH) {
             if (value === null) {
                 return 'null';
             }
@@ -3452,7 +3481,7 @@
             notification.classList.add('show');
             setTimeout(() => {
                 notification.classList.remove('show');
-            }, 3000);
+            }, FHIR_CONSTANTS.NOTIFICATION_DURATION);
         }
 
         async function loadExistingValueSet(event) {
@@ -3509,19 +3538,19 @@
 
             // Validate name format
             if (vs.name) {
-                const namePattern = /^[A-Z]([A-Za-z0-9_]){0,254}$/;
+                const namePattern = FHIR_CONSTANTS.NAME_PATTERN;
                 if (!namePattern.test(vs.name)) {
                     violations.push(`⚠️ Name "${vs.name}" does not conform to PascalCase format`);
                 }
-                if (vs.name.length > 254) {
-                    violations.push(`⚠️ Name length (${vs.name.length}) exceeds 254 character limit`);
+                if (vs.name.length > FHIR_CONSTANTS.MAX_NAME_LENGTH) {
+                    violations.push(`⚠️ Name length (${vs.name.length}) exceeds ${FHIR_CONSTANTS.MAX_NAME_LENGTH} character limit`);
                 }
             }
 
             // Validate ID length
             if (vs.id) {
-                if (vs.id.length > 64) {
-                    violations.push(`⚠️ ID length (${vs.id.length}) exceeds 64 character limit`);
+                if (vs.id.length > FHIR_CONSTANTS.MAX_ID_LENGTH) {
+                    violations.push(`⚠️ ID length (${vs.id.length}) exceeds ${FHIR_CONSTANTS.MAX_ID_LENGTH} character limit`);
                 }
             }
 
@@ -3597,11 +3626,11 @@
                             .replace(/\\\.\+\?/g, '.+?');
 
                         try {
-                            const regex = new RegExp(pattern.substring(0, 100)); // Match first 100 chars for performance
-                            return regex.test(trimmed.substring(0, 100));
+                            const regex = new RegExp(pattern.substring(0, FHIR_CONSTANTS.COPYRIGHT_PATTERN_MATCH_LENGTH)); // Match first 100 chars for performance
+                            return regex.test(trimmed.substring(0, FHIR_CONSTANTS.COPYRIGHT_PATTERN_MATCH_LENGTH));
                         } catch (e) {
                             // Fallback to simple string matching
-                            return trimmed.includes(c.template.substring(0, 50).replace(/\{\{year\}\}/g, '').replace(/\{\{publisher\}\}/g, ''));
+                            return trimmed.includes(c.template.substring(0, FHIR_CONSTANTS.COPYRIGHT_FALLBACK_LENGTH).replace(/\{\{year\}\}/g, '').replace(/\{\{publisher\}\}/g, ''));
                         }
                     });
 

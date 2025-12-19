@@ -79,7 +79,7 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
 
 ### Code Organization
 
-- [ ] **Extract constants** ([#25](https://github.com/MattCordell/Stoker/issues/25))
+✅ ~~**Extract constants**~~ ([#25](https://github.com/MattCordell/Stoker/issues/25)) **COMPLETED**
   - Create `FHIR_CONSTANTS` object with:
     - SHAREABLE_PROFILE URL
     - NCTS_PROFILE URL
@@ -87,11 +87,13 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
     - MAX_NAME_LENGTH (254)
     - MAX_ID_LENGTH (64)
   - Replace hardcoded values throughout code
+  - **Implementation**: Created FHIR_CONSTANTS object at line 1410 with FHIR URLs (SNOMED_CT_SYSTEM, LOINC_SYSTEM, SHAREABLE_PROFILE, NCTS_PROFILE, BASE_URL, DATA_ABSENT_REASON_SYSTEM, IDENTIFIER_SYSTEM) and validation limits (MAX_NAME_LENGTH: 254, MAX_ID_LENGTH: 64, NAME_PATTERN regex). Replaced 8 SNOMED_CT_SYSTEM occurrences, 7 MAX_NAME_LENGTH occurrences, 7 MAX_ID_LENGTH occurrences, 5 NAME_PATTERN occurrences, and all other FHIR URL references throughout the codebase.
 
-- [ ] **Extract magic numbers** ([#26](https://github.com/MattCordell/Stoker/issues/26))
+✅ ~~**Extract magic numbers**~~ ([#26](https://github.com/MattCordell/Stoker/issues/26)) **COMPLETED**
   - Notification timeout (3000ms → NOTIFICATION_DURATION)
   - Preview debounce delay (300ms → PREVIEW_DEBOUNCE_MS)
   - Regex substring limit (100 chars) with explanatory comment
+  - **Implementation**: Extended FHIR_CONSTANTS object with UI/UX constants: NOTIFICATION_DURATION (3000ms), ECL_SUMMARY_LENGTH (50 chars), COPYRIGHT_PATTERN_MATCH_LENGTH (100 chars), COPYRIGHT_FALLBACK_LENGTH (50 chars), FORMAT_VALUE_DEFAULT_LENGTH (200 chars). Replaced all hardcoded magic numbers with named constants. Note: PREVIEW_DEBOUNCE_DELAY and MAX_FILE_SIZE were already properly extracted.
 
 - [ ] **Organize JavaScript with section headers** ([#27](https://github.com/MattCordell/Stoker/issues/27))
   - Add clear comment headers for logical sections:
@@ -126,13 +128,14 @@ This document contains recommended enhancements for the FHIR ValueSet Creator, o
 
 ### Security
 
-- [ ] **Add Content Security Policy** ([#31](https://github.com/MattCordell/Stoker/issues/31))
+✅ ~~**Add Content Security Policy**~~ ([#31](https://github.com/MattCordell/Stoker/issues/31)) **COMPLETED**
   - Add CSP meta tag to `<head>`:
     ```html
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
     ```
   - Note: `unsafe-inline` needed for inline styles/scripts in single-file app
+  - **Implementation**: Added comprehensive CSP meta tag at lines 6-7 with security directives: default-src 'self', script-src 'self' 'unsafe-inline', style-src 'self' 'unsafe-inline', img-src 'self' data:, font-src 'self', connect-src 'self', object-src 'none', base-uri 'self', form-action 'self'. Uses 'unsafe-inline' as required for single-file architecture while maintaining protection against external resource injection.
 
 ---
 
