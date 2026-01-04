@@ -1564,25 +1564,34 @@
         // APPLICATION STATE
         // =============================================================================
 
-        // Global focus trap instances
-        let includeEditorFocusTrap = null;
-        let validationReportFocusTrap = null;
-        let diffReportFocusTrap = null;
+        const AppState = {
+            // Focus trap instances
+            focusTraps: {
+                includeEditor: null,
+                validationReport: null,
+                diffReport: null
+            },
 
-        // Configuration data
-        let publishers = [];
-        let copyrights = [];
-        let selectedCopyrights = []; // Array of copyright IDs in order
+            // Configuration data
+            publishers: [],
+            copyrights: [],
+            selectedCopyrights: [], // Array of copyright IDs in order
 
-        // Include blocks management
-        let includeBlocks = []; // Array of include configuration objects
-        let currentEditingIncludeId = null; // ID of include being edited in modal
+            // Include blocks management
+            includeBlocks: [], // Array of include configuration objects
+            currentEditingIncludeId: null, // ID of include being edited in modal
 
-        // Track unsaved changes
-        let hasUnsavedChanges = false;
+            // Form state
+            hasUnsavedChanges: false,
+            originalLoadedValueSet: null, // Store original loaded ValueSet for diff comparison
 
-        // Store original loaded ValueSet for diff comparison
-        let originalLoadedValueSet = null;
+            // Drag and drop state
+            draggedElement: null,
+            draggedIncludeElement: null,
+
+            // Preview debouncing
+            updatePreviewTimeoutId: null
+        };
 
         // =============================================================================
         // INITIALIZATION
@@ -1610,8 +1619,8 @@
                 const pubData = await pubRes.json();
                 const copyData = await copyRes.json();
 
-                publishers = pubData.publishers;
-                copyrights = copyData.copyrights;
+                AppState.publishers = pubData.publishers;
+                AppState.copyrights = copyData.copyrights;
 
                 populatePublishers();
                 populateCopyrights();
@@ -1623,7 +1632,7 @@
 
         function populatePublishers() {
             const select = document.getElementById('publisher');
-            publishers.forEach(p => {
+            AppState.publishers.forEach(p => {
                 const option = document.createElement('option');
                 option.value = p.id;
                 option.textContent = p.name;
@@ -1641,7 +1650,7 @@
                 'footer': []
             };
 
-            copyrights.forEach(c => {
+            AppState.copyrights.forEach(c => {
                 const category = c.category || 'third-party';
                 if (!byCategory[category]) byCategory[category] = [];
                 byCategory[category].push(c);
@@ -1704,12 +1713,12 @@
             }
 
             // Check if already added
-            if (selectedCopyrights.includes(copyrightId)) {
+            if (AppState.selectedCopyrights.includes(copyrightId)) {
                 showNotification('Copyright notice already added', 'warning');
                 return;
             }
 
-            selectedCopyrights.push(copyrightId);
+            AppState.selectedCopyrights.push(copyrightId);
             renderCopyrightList();
             select.value = '';
             updatePreview();
@@ -1717,16 +1726,16 @@
         }
 
         function removeCopyrightNotice(copyrightId) {
-            selectedCopyrights = selectedCopyrights.filter(id => id !== copyrightId);
+            AppState.selectedCopyrights = AppState.selectedCopyrights.filter(id => id !== copyrightId);
             renderCopyrightList();
             updatePreview();
             markFormAsDirty();
         }
 
         function moveCopyrightNotice(fromIndex, toIndex) {
-            const item = selectedCopyrights[fromIndex];
-            selectedCopyrights.splice(fromIndex, 1);
-            selectedCopyrights.splice(toIndex, 0, item);
+            const item = AppState.selectedCopyrights[fromIndex];
+            AppState.selectedCopyrights.splice(fromIndex, 1);
+            AppState.selectedCopyrights.splice(toIndex, 0, item);
             renderCopyrightList();
             updatePreview();
             markFormAsDirty();
@@ -1739,7 +1748,7 @@
         }
 
         function moveCopyrightDown(index) {
-            if (index < selectedCopyrights.length - 1) {
+            if (index < AppState.selectedCopyrights.length - 1) {
                 moveCopyrightNotice(index, index + 1);
             }
         }
@@ -1748,8 +1757,8 @@
             const container = document.getElementById('copyrightList');
             container.innerHTML = '';
 
-            selectedCopyrights.forEach((copyrightId, index) => {
-                const copyright = copyrights.find(c => c.id === copyrightId);
+            AppState.selectedCopyrights.forEach((copyrightId, index) => {
+                const copyright = AppState.copyrights.find(c => c.id === copyrightId);
                 if (!copyright) return;
 
                 const item = document.createElement('div');
@@ -1811,7 +1820,7 @@
                 moveDownBtn.textContent = '↓';
                 moveDownBtn.title = 'Move down';
                 moveDownBtn.setAttribute('aria-label', 'Move copyright notice down');
-                moveDownBtn.disabled = (index === selectedCopyrights.length - 1);
+                moveDownBtn.disabled = (index === AppState.selectedCopyrights.length - 1);
                 moveDownBtn.onclick = (e) => {
                     e.stopPropagation();
                     moveCopyrightDown(index);
@@ -1836,10 +1845,8 @@
         }
 
         // Drag and drop handlers
-        let draggedElement = null;
-
         function handleDragStart(e) {
-            draggedElement = e.currentTarget;
+            AppState.draggedElement = e.currentTarget;
             e.currentTarget.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
         }
@@ -1851,7 +1858,7 @@
             e.dataTransfer.dropEffect = 'move';
 
             const targetElement = e.currentTarget;
-            if (targetElement !== draggedElement) {
+            if (targetElement !== AppState.draggedElement) {
                 targetElement.classList.add('drag-over');
             }
 
@@ -1866,8 +1873,8 @@
             const targetElement = e.currentTarget;
             targetElement.classList.remove('drag-over');
 
-            if (draggedElement !== targetElement) {
-                const fromIndex = parseInt(draggedElement.dataset.index);
+            if (AppState.draggedElement !== targetElement) {
+                const fromIndex = parseInt(AppState.draggedElement.dataset.index);
                 const toIndex = parseInt(targetElement.dataset.index);
                 moveCopyrightNotice(fromIndex, toIndex);
             }
@@ -1892,7 +1899,7 @@
                 return;
             }
 
-            currentEditingIncludeId = null;
+            AppState.currentEditingIncludeId = null;
             openIncludeEditor(type);
             typeSelect.value = '';
         }
@@ -1906,14 +1913,14 @@
             const title = document.getElementById('includeEditorTitle');
 
             if (includeId) {
-                currentEditingIncludeId = includeId;
-                const include = includeBlocks.find(i => i.id === includeId);
+                AppState.currentEditingIncludeId = includeId;
+                const include = AppState.includeBlocks.find(i => i.id === includeId);
                 title.textContent = `Edit ${getIncludeTypeName(include.type)} Include`;
 
                 // Populate form with existing data
                 populateIncludeEditor(include);
             } else {
-                currentEditingIncludeId = null;
+                AppState.currentEditingIncludeId = null;
                 title.textContent = `Add ${getIncludeTypeName(type)} Include`;
 
                 // Clear form
@@ -1926,8 +1933,8 @@
             modal.style.display = 'flex';
 
             // Activate focus trap
-            if (includeEditorFocusTrap) {
-                includeEditorFocusTrap.activate(document.activeElement);
+            if (AppState.focusTraps.includeEditor) {
+                AppState.focusTraps.includeEditor.activate(document.activeElement);
             }
         }
 
@@ -1948,12 +1955,12 @@
             const modal = document.getElementById('includeEditorModal');
 
             // Deactivate focus trap
-            if (includeEditorFocusTrap) {
-                includeEditorFocusTrap.deactivate();
+            if (AppState.focusTraps.includeEditor) {
+                AppState.focusTraps.includeEditor.deactivate();
             }
 
             modal.style.display = 'none';
-            currentEditingIncludeId = null;
+            AppState.currentEditingIncludeId = null;
             clearIncludeEditorForms();
         }
 
@@ -1973,17 +1980,17 @@
                 return;
             }
 
-            if (currentEditingIncludeId) {
+            if (AppState.currentEditingIncludeId) {
                 // Update existing include
-                const index = includeBlocks.findIndex(i => i.id === currentEditingIncludeId);
-                includeBlocks[index] = {
-                    id: currentEditingIncludeId,
+                const index = AppState.includeBlocks.findIndex(i => i.id === AppState.currentEditingIncludeId);
+                AppState.includeBlocks[index] = {
+                    id: AppState.currentEditingIncludeId,
                     type: type,
                     data: data
                 };
             } else {
                 // Add new include
-                includeBlocks.push({
+                AppState.includeBlocks.push({
                     id: 'include-' + Date.now(),
                     type: type,
                     data: data
@@ -2116,16 +2123,16 @@
         }
 
         function removeIncludeBlock(includeId) {
-            includeBlocks = includeBlocks.filter(i => i.id !== includeId);
+            AppState.includeBlocks = AppState.includeBlocks.filter(i => i.id !== includeId);
             renderIncludeBlocksList();
             updatePreview();
             markFormAsDirty();
         }
 
         function moveIncludeBlock(fromIndex, toIndex) {
-            const item = includeBlocks[fromIndex];
-            includeBlocks.splice(fromIndex, 1);
-            includeBlocks.splice(toIndex, 0, item);
+            const item = AppState.includeBlocks[fromIndex];
+            AppState.includeBlocks.splice(fromIndex, 1);
+            AppState.includeBlocks.splice(toIndex, 0, item);
             renderIncludeBlocksList();
             updatePreview();
             markFormAsDirty();
@@ -2138,7 +2145,7 @@
         }
 
         function moveIncludeBlockDown(index) {
-            if (index < includeBlocks.length - 1) {
+            if (index < AppState.includeBlocks.length - 1) {
                 moveIncludeBlock(index, index + 1);
             }
         }
@@ -2147,7 +2154,7 @@
             const container = document.getElementById('includeBlocksList');
             container.innerHTML = '';
 
-            includeBlocks.forEach((include, index) => {
+            AppState.includeBlocks.forEach((include, index) => {
                 const item = document.createElement('div');
                 item.className = 'include-block-item';
                 item.draggable = true;
@@ -2212,7 +2219,7 @@
                 moveDownBtn.textContent = '↓';
                 moveDownBtn.title = 'Move down';
                 moveDownBtn.setAttribute('aria-label', 'Move include block down');
-                moveDownBtn.disabled = (index === includeBlocks.length - 1);
+                moveDownBtn.disabled = (index === AppState.includeBlocks.length - 1);
                 moveDownBtn.onclick = (e) => {
                     e.stopPropagation();
                     moveIncludeBlockDown(index);
@@ -2266,10 +2273,8 @@
         }
 
         // Drag handlers for include blocks
-        let draggedIncludeElement = null;
-
         function handleIncludeDragStart(e) {
-            draggedIncludeElement = e.currentTarget;
+            AppState.draggedIncludeElement = e.currentTarget;
             e.currentTarget.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
         }
@@ -2281,7 +2286,7 @@
             e.dataTransfer.dropEffect = 'move';
 
             const targetElement = e.currentTarget;
-            if (targetElement !== draggedIncludeElement) {
+            if (targetElement !== AppState.draggedIncludeElement) {
                 targetElement.classList.add('drag-over');
             }
 
@@ -2296,8 +2301,8 @@
             const targetElement = e.currentTarget;
             targetElement.classList.remove('drag-over');
 
-            if (draggedIncludeElement !== targetElement) {
-                const fromIndex = parseInt(draggedIncludeElement.dataset.index);
+            if (AppState.draggedIncludeElement !== targetElement) {
+                const fromIndex = parseInt(AppState.draggedIncludeElement.dataset.index);
                 const toIndex = parseInt(targetElement.dataset.index);
                 moveIncludeBlock(fromIndex, toIndex);
             }
@@ -2316,19 +2321,19 @@
             // Initialize focus traps for modals
             const includeModal = document.getElementById('includeEditorModal');
             const includeContent = includeModal.querySelector('[role="dialog"]');
-            includeEditorFocusTrap = createFocusTrap(includeModal, includeContent, closeIncludeEditor);
+            AppState.focusTraps.includeEditor = createFocusTrap(includeModal, includeContent, closeIncludeEditor);
 
             const validationModal = document.getElementById('validationReportModal');
             const validationContent = validationModal.querySelector('[role="dialog"]');
-            validationReportFocusTrap = createFocusTrap(validationModal, validationContent, closeValidationReport);
+            AppState.focusTraps.validationReport = createFocusTrap(validationModal, validationContent, closeValidationReport);
 
             const diffModal = document.getElementById('diffReportModal');
             const diffContent = diffModal.querySelector('[role="dialog"]');
-            diffReportFocusTrap = createFocusTrap(diffModal, diffContent, closeDiffReport);
+            AppState.focusTraps.diffReport = createFocusTrap(diffModal, diffContent, closeDiffReport);
 
             // Warn before leaving page with unsaved changes
             window.addEventListener('beforeunload', (e) => {
-                if (hasUnsavedChanges) {
+                if (AppState.hasUnsavedChanges) {
                     e.preventDefault();
                     e.returnValue = ''; // Required for Chrome
                 }
@@ -2377,11 +2382,11 @@
 
         // Unsaved changes tracking
         function markFormAsDirty() {
-            hasUnsavedChanges = true;
+            AppState.hasUnsavedChanges = true;
         }
 
         function markFormAsClean() {
-            hasUnsavedChanges = false;
+            AppState.hasUnsavedChanges = false;
         }
 
         function suggestName() {
@@ -2491,7 +2496,7 @@
             const name = document.getElementById('name').value.trim();
             const description = document.getElementById('description').value.trim();
             const publisherId = document.getElementById('publisher').value;
-            const publisher = publishers.find(p => p.id === publisherId);
+            const publisher = AppState.publishers.find(p => p.id === publisherId);
             const version = document.getElementById('version').value.trim();
             const date = document.getElementById('date').value;
 
@@ -2591,7 +2596,7 @@
             }
 
             // Copyright notices
-            if (selectedCopyrights.length === 0) {
+            if (AppState.selectedCopyrights.length === 0) {
                 results.warnings.push('No copyright notices selected (recommended to include at least one)');
             }
 
@@ -2602,12 +2607,12 @@
         }
 
         function validateCompose(results) {
-            if (includeBlocks.length === 0) {
+            if (AppState.includeBlocks.length === 0) {
                 results.errors.push('At least one include block must be defined in the compose section');
             } else {
                 // Validate each include block has required data
                 let hasInvalidBlock = false;
-                includeBlocks.forEach((block, index) => {
+                AppState.includeBlocks.forEach((block, index) => {
                     const data = block.data || {};
 
                     if (block.type === 'codeList') {
@@ -2644,7 +2649,7 @@
             const name = document.getElementById('name').value.trim();
             const description = document.getElementById('description').value.trim();
             const publisherId = document.getElementById('publisher').value;
-            const publisher = publishers.find(p => p.id === publisherId);
+            const publisher = AppState.publishers.find(p => p.id === publisherId);
             const version = document.getElementById('version').value.trim();
             const date = document.getElementById('date').value;
             const identifier = document.getElementById('identifier').value.trim();
@@ -2666,8 +2671,8 @@
             if (identifier) results.info.push('✓ Identifier (OID) is provided');
             if (status === 'active') results.info.push('✓ Status is set to "active"');
             if (experimental === false) results.info.push('✓ Experimental is set to false');
-            if (selectedCopyrights.length > 0) results.info.push(`✓ ${selectedCopyrights.length} copyright notice(s) selected`);
-            if (includeBlocks.length > 0) results.info.push(`✓ ${includeBlocks.length} include block(s) defined`);
+            if (AppState.selectedCopyrights.length > 0) results.info.push(`✓ ${AppState.selectedCopyrights.length} copyright notice(s) selected`);
+            if (AppState.includeBlocks.length > 0) results.info.push(`✓ ${AppState.includeBlocks.length} include block(s) defined`);
 
             // Meta profiles check
             results.info.push('✓ Meta profiles automatically included');
@@ -2697,8 +2702,8 @@
 
                 // Activate focus trap with delay to allow dynamic content to render
                 setTimeout(() => {
-                    if (validationReportFocusTrap) {
-                        validationReportFocusTrap.activate(document.activeElement);
+                    if (AppState.focusTraps.validationReport) {
+                        AppState.focusTraps.validationReport.activate(document.activeElement);
                     }
                 }, 50);
             } catch (err) {
@@ -2711,8 +2716,8 @@
             const modal = document.getElementById('validationReportModal');
 
             // Deactivate focus trap
-            if (validationReportFocusTrap) {
-                validationReportFocusTrap.deactivate();
+            if (AppState.focusTraps.validationReport) {
+                AppState.focusTraps.validationReport.deactivate();
             }
 
             modal.style.display = 'none';
@@ -2724,7 +2729,7 @@
 
         function showDiffReport() {
             // Check if original file was loaded
-            if (!originalLoadedValueSet) {
+            if (!AppState.originalLoadedValueSet) {
                 showNotification('No file loaded to compare against', 'warning');
                 return;
             }
@@ -2736,7 +2741,7 @@
             const currentValueSet = generateValueSet();
 
             // Compare original vs current
-            const differences = compareValueSets(originalLoadedValueSet, currentValueSet);
+            const differences = compareValueSets(AppState.originalLoadedValueSet, currentValueSet);
 
             // Render hybrid view: summary + details + full JSON comparison
             let html = '';
@@ -2749,7 +2754,7 @@
                 html += renderDiffDetails(differences);
 
                 // Full JSON comparison (collapsed by default)
-                html += renderFullJsonComparison(originalLoadedValueSet, currentValueSet);
+                html += renderFullJsonComparison(AppState.originalLoadedValueSet, currentValueSet);
             } else {
                 // No changes - show empty state
                 html += `
@@ -2767,8 +2772,8 @@
             modal.style.display = 'flex';
 
             // Activate focus trap
-            if (diffReportFocusTrap) {
-                diffReportFocusTrap.activate();
+            if (AppState.focusTraps.diffReport) {
+                AppState.focusTraps.diffReport.activate();
             }
         }
 
@@ -2776,8 +2781,8 @@
             const modal = document.getElementById('diffReportModal');
 
             // Deactivate focus trap
-            if (diffReportFocusTrap) {
-                diffReportFocusTrap.deactivate();
+            if (AppState.focusTraps.diffReport) {
+                AppState.focusTraps.diffReport.deactivate();
             }
 
             modal.style.display = 'none';
@@ -2974,7 +2979,7 @@
 
             // Publisher and copyright
             const publisherId = document.getElementById('publisher').value;
-            const publisher = publishers.find(p => p.id === publisherId);
+            const publisher = AppState.publishers.find(p => p.id === publisherId);
 
             // Generate derived values
             const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
@@ -2984,10 +2989,10 @@
 
             // Build copyright from selected notices with " \n\n" separator (per authoring guide)
             let copyrightText = '';
-            if (selectedCopyrights.length > 0) {
+            if (AppState.selectedCopyrights.length > 0) {
                 const currentYear = new Date().getFullYear();
-                const copyrightParagraphs = selectedCopyrights.map(copyrightId => {
-                    const copyrightTemplate = copyrights.find(c => c.id === copyrightId);
+                const copyrightParagraphs = AppState.selectedCopyrights.map(copyrightId => {
+                    const copyrightTemplate = AppState.copyrights.find(c => c.id === copyrightId);
                     if (!copyrightTemplate) return '';
                     return copyrightTemplate.template
                         .replace(/\{\{year\}\}/g, currentYear)
@@ -3062,7 +3067,7 @@
             const compose = { include: [] };
 
             // Build includes from includeBlocks array
-            includeBlocks.forEach(includeBlock => {
+            AppState.includeBlocks.forEach(includeBlock => {
                 const { type, data } = includeBlock;
 
                 switch (type) {
@@ -3133,19 +3138,18 @@
         // PREVIEW DEBOUNCING
         // =============================================================================
 
-        let updatePreviewTimeoutId = null;
         const PREVIEW_DEBOUNCE_DELAY = 200; // milliseconds
 
         function debouncedUpdatePreview() {
             // Clear any pending update
-            if (updatePreviewTimeoutId !== null) {
-                clearTimeout(updatePreviewTimeoutId);
+            if (AppState.updatePreviewTimeoutId !== null) {
+                clearTimeout(AppState.updatePreviewTimeoutId);
             }
 
             // Schedule new update
-            updatePreviewTimeoutId = setTimeout(() => {
+            AppState.updatePreviewTimeoutId = setTimeout(() => {
                 updatePreview();
-                updatePreviewTimeoutId = null;
+                AppState.updatePreviewTimeoutId = null;
             }, PREVIEW_DEBOUNCE_DELAY);
         }
 
@@ -3548,7 +3552,7 @@
                 const valueSet = JSON.parse(text);
 
                 // Store original for diff comparison (deep clone)
-                originalLoadedValueSet = JSON.parse(JSON.stringify(valueSet));
+                AppState.originalLoadedValueSet = JSON.parse(JSON.stringify(valueSet));
 
                 populateFormFromValueSet(valueSet);
                 document.getElementById('loadedFileName').textContent = `Loaded: ${file.name}`;
@@ -3646,14 +3650,14 @@
 
             // Publisher - try to match
             if (vs.publisher) {
-                const matchedPub = publishers.find(p => p.name === vs.publisher);
+                const matchedPub = AppState.publishers.find(p => p.name === vs.publisher);
                 if (matchedPub) {
                     document.getElementById('publisher').value = matchedPub.id;
                 }
             }
 
             // Copyright - parse and match paragraphs to templates
-            selectedCopyrights = [];
+            AppState.selectedCopyrights = [];
             if (vs.copyright) {
                 // Split by " \n\n" (authoring guide separator)
                 const paragraphs = vs.copyright.split(' \n\n');
@@ -3663,7 +3667,7 @@
                     if (!trimmed) return;
 
                     // Try to match paragraph to a template
-                    const matched = copyrights.find(c => {
+                    const matched = AppState.copyrights.find(c => {
                         // Remove year and publisher placeholders for matching
                         const template = c.template
                             .replace(/\{\{year\}\}/g, '\\d{4}')
@@ -3684,8 +3688,8 @@
                         }
                     });
 
-                    if (matched && !selectedCopyrights.includes(matched.id)) {
-                        selectedCopyrights.push(matched.id);
+                    if (matched && !AppState.selectedCopyrights.includes(matched.id)) {
+                        AppState.selectedCopyrights.push(matched.id);
                     }
                 });
 
@@ -3693,7 +3697,7 @@
             }
 
             // Compose section - load ALL includes
-            includeBlocks = [];
+            AppState.includeBlocks = [];
             if (vs.compose?.include) {
                 vs.compose.include.forEach(inc => {
                     let type, data;
@@ -3732,8 +3736,8 @@
                     }
 
                     if (type && data) {
-                        includeBlocks.push({
-                            id: 'include-' + Date.now() + '-' + includeBlocks.length,
+                        AppState.includeBlocks.push({
+                            id: 'include-' + Date.now() + '-' + AppState.includeBlocks.length,
                             type: type,
                             data: data
                         });
@@ -3807,11 +3811,11 @@
             document.getElementById('identifier').value = '';
             document.getElementById('publisher').value = '';
             document.getElementById('copyright').value = '';
-            selectedCopyrights = [];
+            AppState.selectedCopyrights = [];
             renderCopyrightList();
 
             // Clear include blocks
-            includeBlocks = [];
+            AppState.includeBlocks = [];
             renderIncludeBlocksList();
             clearIncludeEditorForms();
             document.getElementById('includeTypeSelect').value = '';
@@ -3824,7 +3828,7 @@
             showNotification('Form cleared');
 
             // Clear original loaded ValueSet
-            originalLoadedValueSet = null;
+            AppState.originalLoadedValueSet = null;
 
             // Disable diff button since there's no original to compare against
             disableDiffButton();
