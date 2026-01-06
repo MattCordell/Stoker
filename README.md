@@ -23,3 +23,24 @@ The tool runs entirely in the browser with no server-side dependencies, making i
 ## Usage
 
 Simply open the application in a web browser and start filling in the form. The JSON preview updates in real-time as you work, and you can download the final ValueSet resource when ready.
+
+## Running Locally
+
+While the [production deployment](https://mattcordell.github.io/Stoker/) is recommended for general use, you can run Stoker locally if needed (e.g., for development or testing). Since this is a static web application, you'll need a local HTTP server to properly load the configuration files:
+
+**Python HTTP Server:**
+```bash
+python -m http.server 8000
+```
+
+**Node.js http-server:**
+```bash
+npx http-server -p 8000
+```
+
+**VS Code Live Server:**
+Right-click on `index.html` and select "Open with Live Server".
+
+Then navigate to `http://localhost:8000` in your browser.
+
+> **Note:** Opening `index.html` directly in your browser (via `file://`) may cause CORS issues when loading configuration files.
