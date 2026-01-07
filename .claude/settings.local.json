@@ -4,7 +4,9 @@
       "Bash(gh issue create:*)",
       "Bash(gh issue view:*)",
       "Bash(cat:*)",
-      "Bash(gh issue list:*)"
+      "Bash(gh issue list:*)",
+      "Bash(dir \"c:\\\\Repos\\\\Stoker\")",
+      "Bash(dir \"c:\\\\Repos\\\\Stoker\\\\config\")"
     ]
   }
 }
