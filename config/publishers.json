@@ -3,6 +3,7 @@
     {
       "id": "adha",
       "name": "Australian Digital Health Agency",
+      "baseUrl": "https://healthterminologies.gov.au/fhir/ValueSet",
       "contact": {
         "system": "email",
         "value": "help@digitalhealth.gov.au"
@@ -11,6 +12,7 @@
     {
       "id": "rcpa",
       "name": "RCPA",
+      "baseUrl": "https://www.rcpa.edu.au/fhir/ValueSet",
       "contact": {
         "system": "email",
         "value": "pitus@rcpa.edu.au"

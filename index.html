@@ -1584,6 +1584,7 @@
             // Form state
             hasUnsavedChanges: false,
             originalLoadedValueSet: null, // Store original loaded ValueSet for diff comparison
+            loadedUrl: null, // Store URL from loaded ValueSet (preserved even if it doesn't match publisher)
 
             // Drag and drop state
             draggedElement: null,
@@ -2361,6 +2362,18 @@
                 }
             });
 
+            // Clear loadedUrl when name, version, or publisher changes
+            // (loaded URL is no longer valid if these fields change)
+            const urlDependentFields = ['name', 'version', 'publisher'];
+            urlDependentFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('input', () => {
+                        AppState.loadedUrl = null;
+                    });
+                }
+            });
+
             // File upload handlers
             document.getElementById('loadFile').addEventListener('change', loadExistingValueSet);
             document.getElementById('modalCodeListFile').addEventListener('change', loadCodeListFile);
@@ -2603,6 +2616,23 @@
             // Identifier (OID)
             if (!identifier) {
                 results.warnings.push('Identifier (OID) not provided (recommended for NCTS resources)');
+            }
+
+            // URL conflict check (for loaded ValueSets)
+            if (AppState.loadedUrl && name) {
+                const publisherId = document.getElementById('publisher').value;
+                const publisher = AppState.publishers.find(p => p.id === publisherId);
+                const version = document.getElementById('version').value.trim();
+
+                if (publisher && version) {
+                    const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+                    const majorVersion = version.split('.')[0];
+                    const expectedUrl = `${publisher.baseUrl}/${kebabName}-${majorVersion}`;
+
+                    if (AppState.loadedUrl !== expectedUrl) {
+                        results.warnings.push(`URL conflict: Loaded URL "${AppState.loadedUrl}" does not match expected URL for publisher "${publisher.name}": "${expectedUrl}". The loaded URL will be preserved.`);
+                    }
+                }
             }
         }
 
@@ -2985,7 +3015,15 @@
             const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
             const majorVersion = version.split('.')[0];
             const id = `${kebabName}-${majorVersion}`;
-            const url = `${FHIR_CONSTANTS.BASE_URL}/${kebabName}-${majorVersion}`;
+
+            // Determine URL: use loaded URL if available, otherwise generate from publisher's baseUrl
+            let url;
+            if (AppState.loadedUrl) {
+                url = AppState.loadedUrl;
+            } else {
+                const baseUrl = publisher?.baseUrl || FHIR_CONSTANTS.BASE_URL;
+                url = `${baseUrl}/${kebabName}-${majorVersion}`;
+            }
 
             // Build copyright from selected notices with " \n\n" separator (per authoring guide)
             let copyrightText = '';
@@ -3630,6 +3668,9 @@
             document.getElementById('status').value = vs.status || 'active';
             document.getElementById('experimental').checked = vs.experimental === true;
 
+            // Store URL from loaded ValueSet (will be preserved even if it doesn't match publisher)
+            AppState.loadedUrl = vs.url || null;
+
             // Set date to today for new version
             setDefaultDate();
 
@@ -3827,8 +3868,9 @@
             updatePreview();
             showNotification('Form cleared');
 
-            // Clear original loaded ValueSet
+            // Clear original loaded ValueSet and URL
             AppState.originalLoadedValueSet = null;
+            AppState.loadedUrl = null;
 
             // Disable diff button since there's no original to compare against
             disableDiffButton();
