@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+          content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://tx.ontoserver.csiro.au; object-src 'none'; base-uri 'self'; form-action 'self';">
     <title>FHIR ValueSet Creator</title>
     <link rel="icon" type="image/svg+xml" href="favicon.ico">
     <style>
@@ -852,6 +852,94 @@
             margin-top: 1rem;
         }
 
+        /* Server Validation Styles */
+        .server-validation-divider {
+            border: none;
+            border-top: 2px solid var(--border);
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        .server-validation-section {
+            margin-top: 0.5rem;
+        }
+
+        .server-validate-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: var(--card-bg);
+            color: var(--primary);
+            transition: all 0.2s;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .server-validate-btn:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+        }
+
+        .server-validate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .server-validate-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: server-validate-spin 0.8s linear infinite;
+        }
+
+        @keyframes server-validate-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .server-validation-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .validation-item.information {
+            border-left-color: var(--primary);
+            background: color-mix(in srgb, var(--primary) 10%, var(--card-bg));
+        }
+
+        .section-header.information {
+            color: var(--primary);
+        }
+
+        .server-validation-error {
+            padding: 0.75rem;
+            background: color-mix(in srgb, var(--error) 10%, var(--card-bg));
+            border-left: 3px solid var(--error);
+            border-radius: 3px;
+            font-size: 0.875rem;
+            color: var(--text);
+        }
+
+        .validation-item .issue-location {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            font-family: monospace;
+        }
+
         /* Diff View Styles */
         .diff-summary {
             padding: 1rem;
@@ -1430,7 +1518,11 @@
             ECL_SUMMARY_LENGTH: 50,                // characters
             COPYRIGHT_PATTERN_MATCH_LENGTH: 100,   // characters for regex performance
             COPYRIGHT_FALLBACK_LENGTH: 50,         // characters for simple matching
-            FORMAT_VALUE_DEFAULT_LENGTH: 200       // characters for value truncation
+            FORMAT_VALUE_DEFAULT_LENGTH: 200,      // characters for value truncation
+
+            // Server validation
+            ONTOSERVER_BASE: 'https://tx.ontoserver.csiro.au/fhir',
+            VALIDATE_TIMEOUT: 30000                // 30 second timeout
         };
 
         // =============================================================================
@@ -2754,6 +2846,189 @@
         }
 
         // =============================================================================
+        // SERVER VALIDATION (Ontoserver $validate)
+        // =============================================================================
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        async function fetchWithTimeout(url, options, timeoutMs) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                return response;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        function formatIssueItem(issue, cssClass) {
+            const icon = cssClass === 'error' ? '✗' : cssClass === 'warning' ? '⚠' : 'ℹ';
+            const diagnostics = issue.diagnostics || issue.details?.text || 'No details provided';
+            const location = issue.expression?.[0] || issue.location?.[0] || '';
+
+            const safeDiagnostics = escapeHtml(diagnostics);
+            const safeLocation = escapeHtml(location);
+
+            let html = `<div class="validation-item ${cssClass}">${icon} ${safeDiagnostics}`;
+            if (safeLocation) {
+                html += `<span class="issue-location">${safeLocation}</span>`;
+            }
+            html += `</div>`;
+            return html;
+        }
+
+        function renderIssueSection(sectionId, label, issues, cssClass, startCollapsed) {
+            const collapsedClass = startCollapsed ? ' collapsed' : '';
+            return `
+                <div class="validation-section">
+                    <div class="expandable-section">
+                        <div class="section-header ${cssClass}" onclick="toggleSection('${sectionId}')">
+                            <span class="section-icon${collapsedClass}" id="${sectionId}-icon">▼</span>
+                            <span>${label} (${issues.length})</span>
+                        </div>
+                        <div class="section-content${collapsedClass}" id="${sectionId}-content">
+                            ${issues.map(issue => formatIssueItem(issue, cssClass)).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOperationOutcome(outcome) {
+            const issues = outcome.issue || [];
+
+            const errors = issues.filter(i => i.severity === 'fatal' || i.severity === 'error');
+            const warnings = issues.filter(i => i.severity === 'warning');
+            const information = issues.filter(i => i.severity === 'information');
+
+            const hasErrors = errors.length > 0;
+            const hasWarnings = warnings.length > 0;
+            const hasInfo = information.length > 0;
+
+            let summaryClass = 'success';
+            let summaryIcon = '✓';
+            let summaryText = 'Server validation passed with no issues!';
+
+            if (hasErrors) {
+                summaryClass = 'has-errors';
+                summaryIcon = '✗';
+                summaryText = `Server found ${errors.length} error(s)` +
+                    (hasWarnings ? ` and ${warnings.length} warning(s)` : '');
+            } else if (hasWarnings) {
+                summaryClass = 'has-warnings';
+                summaryIcon = '⚠';
+                summaryText = `Server found ${warnings.length} warning(s)`;
+            } else if (hasInfo) {
+                summaryText = `Server returned ${information.length} informational message(s)`;
+            }
+
+            let html = `
+                <div class="validation-summary ${summaryClass}" style="margin-top: 0.75rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                        <span style="font-size: 1.5rem; margin-right: 0.5rem;">${summaryIcon}</span>
+                        ${summaryText}
+                    </div>
+                </div>
+            `;
+
+            if (hasErrors) {
+                html += renderIssueSection('server-errors', 'Errors', errors, 'error', false);
+            }
+            if (hasWarnings) {
+                html += renderIssueSection('server-warnings', 'Warnings', warnings, 'warning', false);
+            }
+            if (hasInfo) {
+                html += renderIssueSection('server-info', 'Information', information, 'information', true);
+            }
+
+            return html;
+        }
+
+        async function runServerValidation() {
+            const btn = document.getElementById('serverValidateBtn');
+            const resultsContainer = document.getElementById('serverValidationResults');
+
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<span class="server-validate-spinner"></span> Validating...';
+            resultsContainer.innerHTML = '';
+
+            try {
+                const valueSet = generateValueSet();
+                const response = await fetchWithTimeout(
+                    `${FHIR_CONSTANTS.ONTOSERVER_BASE}/ValueSet/$validate`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/fhir+json',
+                            'Accept': 'application/fhir+json'
+                        },
+                        body: JSON.stringify(valueSet)
+                    },
+                    FHIR_CONSTANTS.VALIDATE_TIMEOUT
+                );
+
+                if (!response.ok) {
+                    let errorDetail = `Server returned HTTP ${response.status}`;
+                    try {
+                        const errorBody = await response.json();
+                        if (errorBody.resourceType === 'OperationOutcome' && errorBody.issue) {
+                            resultsContainer.innerHTML = renderOperationOutcome(errorBody);
+                            btn.innerHTML = 'Validate on Server';
+                            btn.disabled = false;
+                            return;
+                        }
+                        if (errorBody.issue?.[0]?.diagnostics) {
+                            errorDetail += `: ${errorBody.issue[0].diagnostics}`;
+                        }
+                    } catch (parseErr) {
+                        // Response body was not JSON
+                    }
+                    throw new Error(errorDetail);
+                }
+
+                const operationOutcome = await response.json();
+
+                if (operationOutcome.resourceType !== 'OperationOutcome') {
+                    throw new Error('Server did not return an OperationOutcome resource');
+                }
+
+                resultsContainer.innerHTML = renderOperationOutcome(operationOutcome);
+
+            } catch (err) {
+                console.error('Server validation failed:', err);
+
+                let userMessage = 'Unable to reach the validation server.';
+                if (err.name === 'AbortError') {
+                    userMessage = 'Server validation timed out. The server may be unavailable or under heavy load.';
+                } else if (err.message.includes('HTTP')) {
+                    userMessage = err.message;
+                } else if (err.message === 'Failed to fetch' || err.message.includes('NetworkError')) {
+                    userMessage = 'Network error: Could not connect to the Ontoserver. Check your internet connection or try again later.';
+                }
+
+                resultsContainer.innerHTML = `
+                    <div class="server-validation-error" style="margin-top: 0.75rem;">
+                        <strong>Server Validation Failed</strong><br>
+                        ${escapeHtml(userMessage)}
+                    </div>
+                `;
+            } finally {
+                btn.innerHTML = 'Validate on Server';
+                btn.disabled = false;
+            }
+        }
+
+        // =============================================================================
         // DIFF ENGINE
         // =============================================================================
 
@@ -2931,6 +3206,23 @@
                     </div>
                 `;
             }
+
+            // Server validation section
+            html += `
+                <hr class="server-validation-divider">
+                <div class="server-validation-section" id="serverValidationSection">
+                    <div class="server-validation-header">
+                        Server-Side Validation (Ontoserver)
+                    </div>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0 0 0.75rem 0;">
+                        Validate this ValueSet against the NCTS Ontoserver FHIR terminology server for profile conformance checking.
+                    </p>
+                    <button class="server-validate-btn" id="serverValidateBtn" onclick="runServerValidation()">
+                        Validate on Server
+                    </button>
+                    <div id="serverValidationResults"></div>
+                </div>
+            `;
 
             return html;
         }
