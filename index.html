@@ -1164,7 +1164,8 @@
 
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" placeholder="Describe what this ValueSet contains and its purpose..."></textarea>
+                    <textarea id="description" placeholder="e.g., The [title] value set includes values that..."></textarea>
+                    <span class="label-hint">Recommended pattern: "The [title of value set] value set includes values that..."</span>
                 </div>
 
                 <div class="form-group">
@@ -1206,6 +1207,7 @@
                         <span class="identifier-prefix">urn:oid:</span>
                         <input type="text" id="identifier" placeholder="e.g., 1.2.36.1.2001.1004.201.10036">
                     </div>
+                    <span id="oidArcHint" class="label-hint"></span>
                 </div>
             </div>
 
@@ -1717,6 +1719,7 @@
 
                 populatePublishers();
                 populateCopyrights();
+                updateOidArcHint();
             } catch (err) {
                 console.error('Failed to load config:', err);
                 showNotification('Failed to load configuration files', 'error');
@@ -2466,6 +2469,10 @@
                 }
             });
 
+            // Update OID arc hint when publisher changes
+            document.getElementById('publisher').addEventListener('change', updateOidArcHint);
+            updateOidArcHint(); // Initial update
+
             // File upload handlers
             document.getElementById('loadFile').addEventListener('change', loadExistingValueSet);
             document.getElementById('modalCodeListFile').addEventListener('change', loadCodeListFile);
@@ -2577,6 +2584,29 @@
             }
 
             debouncedUpdatePreview();
+        }
+
+        // OID Arc Hint
+        function getPublisherOidArc() {
+            const publisherId = document.getElementById('publisher').value;
+            const publisher = AppState.publishers.find(p => p.id === publisherId);
+            if (publisher && publisher.oidArcs && publisher.oidArcs.ValueSet) {
+                return publisher.oidArcs.ValueSet;
+            }
+            return null;
+        }
+
+        function updateOidArcHint() {
+            const hint = document.getElementById('oidArcHint');
+            if (!hint) return;
+            const arc = getPublisherOidArc();
+            if (arc) {
+                hint.textContent = `Expected ValueSet OID arc: ${arc}.*`;
+                document.getElementById('identifier').placeholder = `e.g., ${arc}.10036`;
+            } else {
+                hint.textContent = '';
+                document.getElementById('identifier').placeholder = 'e.g., 1.2.36.1.2001.1004.201.10036';
+            }
         }
 
         // Validation Report Functions
@@ -2708,6 +2738,11 @@
             // Identifier (OID)
             if (!identifier) {
                 results.warnings.push('Identifier (OID) not provided (recommended for NCTS resources)');
+            } else {
+                const expectedArc = getPublisherOidArc();
+                if (expectedArc && !identifier.startsWith(expectedArc + '.')) {
+                    results.warnings.push(`Identifier (OID) does not match the expected ValueSet arc for this publisher (expected prefix: ${expectedArc}.*)`);
+                }
             }
 
             // URL conflict check (for loaded ValueSets)

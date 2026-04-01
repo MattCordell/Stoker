@@ -7,6 +7,11 @@
       "contact": {
         "system": "email",
         "value": "help@digitalhealth.gov.au"
+      },
+      "oidArcs": {
+        "CodeSystem": "1.2.36.1.2001.1004.200",
+        "ValueSet": "1.2.36.1.2001.1004.201",
+        "ConceptMap": "1.2.36.1.2001.1004.202"
       }
     },
     {

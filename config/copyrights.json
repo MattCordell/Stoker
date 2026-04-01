@@ -13,22 +13,28 @@
       "template": "Copyright © {{year}} {{publisher}} - All rights reserved. Except for the material identified below, this content is licensed under a Creative Commons Attribution 4.0 International License. See https://creativecommons.org/licenses/by/4.0/."
     },
     {
+      "id": "rcpa-base",
+      "name": "RCPA Copyright Header",
+      "category": "base",
+      "template": "Copyright © 2017 - {{year}} The Royal College of Pathologists of Australasia (RCPA). All rights reserved."
+    },
+    {
       "id": "aihw-material",
-      "name": "AIHW Material Notice",
+      "name": "AIHW Material Notice (METeOR preferred)",
       "category": "third-party",
       "template": "This resource includes material that is based on Australian Institute of Health and Welfare material."
+    },
+    {
+      "id": "meteor-material",
+      "name": "METeOR Material Notice (alternative)",
+      "category": "third-party",
+      "template": "This resource includes material that is based on METeOR (Metadata Online Registry) metadata."
     },
     {
       "id": "abs-material",
       "name": "ABS Material Notice",
       "category": "third-party",
       "template": "This resource includes material that is based on Australian Bureau of Statistics data."
-    },
-    {
-      "id": "meteor-material",
-      "name": "METeOR Metadata Notice",
-      "category": "third-party",
-      "template": "This resource includes material that is based on METeOR (Metadata Online Registry) metadata."
     },
     {
       "id": "snomed-ct-license",
@@ -40,7 +46,7 @@
       "id": "loinc-license",
       "name": "LOINC License",
       "category": "third-party",
-      "template": "This material contains content from LOINC (http://loinc.org). LOINC is copyright 1995-{{year}}, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc."
+      "template": "This material contains content from LOINC (http://loinc.org). LOINC is copyright © 1995-{{year}}, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc."
     },
     {
       "id": "hl7-tho-license",
@@ -49,22 +55,58 @@
       "template": "This resource also includes all or a portion of material from the HL7 Terminology (THO). THO is copyright ©1989+ Health Level Seven International and is made available under the CC0 designation. For more licensing information see: https://terminology.hl7.org/license."
     },
     {
+      "id": "hl7-vocab-license",
+      "name": "HL7 Vocabulary License",
+      "category": "third-party",
+      "template": "This resource also includes all or a portion of the HL7 Vocabulary, or is derived from the HL7 Vocabulary, subject to a license from Health Level Seven International. Your use of the HL7 Vocabulary also is subject to this license, a copy of which is accessible through the following link: http://www.hl7.org/permalink/?VocabTables. \n\nThe current complete HL7 Vocabulary is also available through this link. The HL7 Vocabulary is copyright © 1989-2010, Health Level Seven International. All rights reserved. \n\nTHE HL7 VOCABULARY IS PROVIDED 'AS IS'. ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE."
+    },
+    {
+      "id": "fhir-cc0-license",
+      "name": "FHIR (CC0) License",
+      "category": "third-party",
+      "template": "This resource also includes all or a portion of material that is HL7 FHIR Copyright © 2011+ HL7 licensed under Creative Commons 'No Rights Reserved' (CC0)."
+    },
+    {
+      "id": "hl7au-base-cc0-license",
+      "name": "HL7 AU Base (CC0) License",
+      "category": "third-party",
+      "template": "This resource also includes all or a portion of material that is HL7 Australia FHIR Copyright © 2011+ HL7 licensed under Creative Commons 'No Rights Reserved' (CC0)."
+    },
+    {
       "id": "ucum-license",
       "name": "UCUM License",
       "category": "third-party",
       "template": "This material contains content from UCUM (http://unitsofmeasure.org). The Unified Code for Units of Measure (UCUM) is copyright ©1999-{{year}}, Regenstrief Institute, Inc. All rights reserved."
     },
     {
+      "id": "pbs-health-license",
+      "name": "PBS (Health) License — DRAFT",
+      "category": "third-party",
+      "template": "This resource includes PBS schedule material © The Commonwealth of Australia as presented by the Department of Health that has been modified with permission from the Department of Health. \n\nThat material may be reproduced in part or in whole for personal use as general reference material only, provided one copy only is reproduced and so long as this copyright notice and the reference to the disclaimer located at http://www.pbs.gov.au/info/general/disclaimer remains intact. Apart from these general uses and the uses permitted under the Copyright Act 1968 (Cth), all rights are reserved."
+    },
+    {
+      "id": "dhs-air-vaccine-license",
+      "name": "DHS AIR Vaccine Codes (CC BY 3.0 AU)",
+      "category": "third-party",
+      "template": "This resource also includes material from the \"Australian Immunisation Register Vaccine Code Formats\" — last updated: {{year}} — © Commonwealth of Australia, represented by Services Australia https://www.servicesaustralia.gov.au/organisations/health-professionals/services/medicare/australian-immunisation-register-health-professionals/resources/air-vaccine-code-formats. Licensed under https://creativecommons.org/licenses/by/3.0/au."
+    },
+    {
+      "id": "ietf-license",
+      "name": "IETF Trust License",
+      "category": "third-party",
+      "template": "Copyright (c) 2008 IETF Trust and the persons identified as the document authors (https://tools.ietf.org/html/bcp47). All rights reserved."
+    },
+    {
+      "id": "nhsd-ig-license",
+      "name": "NHSD FHIR Implementation Guide",
+      "category": "third-party",
+      "template": "This resource includes data modelling that is based on the National Health Services Directory FHIR Implementation Guide, managed by Healthdirect Australia."
+    },
+    {
       "id": "copyright-statement-footer",
       "name": "Copyright Statement Footer",
       "category": "footer",
       "template": "All copies of this resource must include this copyright statement and all information contained in this statement."
-    },
-    {
-      "id": "rcpa-base",
-      "name": "RCPA Copyright Header",
-      "category": "base",
-      "template": "Copyright © 2017 - {{year}} The Royal College of Pathologists of Australasia (RCPA). All rights reserved."
     },
     {
       "id": "rcpa-copyright-statement-footer",
