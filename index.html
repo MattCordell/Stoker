@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://tx.ontoserver.csiro.au; object-src 'none'; base-uri 'self'; form-action 'self';">
-    <title>FHIR ValueSet Creator</title>
+    <title>FHIR Terminology Creator</title>
     <link rel="icon" type="image/svg+xml" href="favicon.ico">
     <style>
         :root {
@@ -1114,14 +1114,199 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+
+        /* Resource Type Mode Switcher */
+        .resource-type-switcher {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .mode-btn {
+            background: var(--card-bg);
+            border: none;
+            padding: 0.4rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            border-right: 1px solid var(--border);
+        }
+
+        .mode-btn:last-child {
+            border-right: none;
+        }
+
+        .mode-btn:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Concepts Table */
+        .concepts-table-wrapper {
+            overflow-x: auto;
+            margin-top: 0.5rem;
+        }
+
+        .concepts-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .concepts-table th {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+            font-size: 0.8125rem;
+            white-space: nowrap;
+        }
+
+        .concepts-table td {
+            padding: 0.2rem 0.4rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        .concepts-table tr:hover td {
+            background: color-mix(in srgb, var(--primary) 4%, var(--card-bg));
+        }
+
+        .concept-indent-cell {
+            width: 8px;
+            padding: 0 0 0 0;
+        }
+
+        .concept-code-input,
+        .concept-display-input {
+            width: 100%;
+            border: 1px solid transparent;
+            border-radius: 3px;
+            padding: 0.3rem 0.4rem;
+            font-size: 0.8125rem;
+            font-family: inherit;
+            background: transparent;
+            color: var(--text);
+            min-width: 80px;
+        }
+
+        .concept-code-input {
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+        }
+
+        .concept-code-input:focus,
+        .concept-display-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--input-bg);
+            box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+        }
+
+        .concept-definition-input {
+            width: 100%;
+            border: 1px solid transparent;
+            border-radius: 3px;
+            padding: 0.3rem 0.4rem;
+            font-size: 0.8125rem;
+            font-family: inherit;
+            background: transparent;
+            color: var(--text);
+            min-height: 48px;
+            resize: vertical;
+        }
+
+        .concept-definition-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--input-bg);
+            box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+        }
+
+        .concept-actions {
+            display: flex;
+            gap: 0.2rem;
+            align-items: center;
+            padding: 0.2rem 0;
+        }
+
+        .concept-action-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            cursor: pointer;
+            padding: 0.2rem 0.35rem;
+            border-radius: 3px;
+            transition: all 0.15s;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .concept-action-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .concept-action-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .concept-action-btn.danger:hover:not(:disabled) {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .concepts-empty-msg {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .concepts-section-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .concepts-section-hdr h2 {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+            font-size: 1.1rem;
+        }
+
+        .concepts-hdr-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .cs-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header-row">
             <div class="header-title">
-                <h1 style="margin-bottom: 0;">FHIR ValueSet Creator</h1>
-                <p class="subtitle" style="margin-bottom: 0;">Create FHIR R4 ValueSet resources for download</p>
+                <h1 id="pageTitle" style="margin-bottom: 0;">FHIR ValueSet Creator</h1>
+                <p id="pageSubtitle" class="subtitle" style="margin-bottom: 0;">Create FHIR R4 ValueSet resources for download</p>
             </div>
             <div class="header-actions">
                 <a href="https://github.com/MattCordell/Stoker/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" aria-label="Report bug on GitHub (opens in new tab)">
@@ -1136,8 +1321,12 @@
         </div>
 
         <div class="load-section card">
+            <div class="resource-type-switcher" role="group" aria-label="Resource type">
+                <button id="btnModeValueSet" class="mode-btn active" onclick="switchResourceType('ValueSet')" aria-pressed="true">ValueSet</button>
+                <button id="btnModeCodeSystem" class="mode-btn" onclick="switchResourceType('CodeSystem')" aria-pressed="false">CodeSystem</button>
+            </div>
             <input type="file" id="loadFile" accept=".json">
-            <button class="btn btn-secondary" onclick="document.getElementById('loadFile').click()">
+            <button id="loadFileBtn" class="btn btn-secondary" onclick="document.getElementById('loadFile').click()">
                 Load Existing ValueSet
             </button>
             <span id="loadedFileName" style="color: var(--text-muted); font-size: 0.875rem;"></span>
@@ -1238,7 +1427,7 @@
                 </div>
             </div>
 
-            <div class="card" style="margin-top: 1rem;">
+            <div id="includeSection" class="card" style="margin-top: 1rem;">
                 <h2>Compose - Include Blocks</h2>
                 <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
                     Add one or more include blocks to define the ValueSet contents
@@ -1290,13 +1479,91 @@
                 </div>
 
             </div>
+
+            <!-- CodeSystem Properties card (shown in CodeSystem mode only) -->
+            <div id="csPropertiesCard" class="card" style="margin-top: 1rem; display: none;">
+                <h2>CodeSystem Properties</h2>
+
+                <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="csCaseSensitive">
+                        <label for="csCaseSensitive" style="margin: 0;">Case Sensitive</label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="csCompositional">
+                        <label for="csCompositional" style="margin: 0;">Compositional</label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="csVersionNeeded">
+                        <label for="csVersionNeeded" style="margin: 0;">Version Needed</label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="csContent">Content</label>
+                        <select id="csContent">
+                            <option value="complete" selected>complete</option>
+                            <option value="not-present">not-present</option>
+                            <option value="example">example</option>
+                            <option value="fragment">fragment</option>
+                            <option value="supplement">supplement</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="csHierarchyMeaning">Hierarchy Meaning <span class="label-hint">(optional)</span></label>
+                        <select id="csHierarchyMeaning">
+                            <option value="">— none —</option>
+                            <option value="grouped-by">grouped-by</option>
+                            <option value="is-a">is-a</option>
+                            <option value="part-of">part-of</option>
+                            <option value="classified-with">classified-with</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="csValueSet">Implicit Value Set URL <span class="label-hint">(leave blank to auto-derive as CodeSystem URL + /vs)</span></label>
+                    <input type="text" id="csValueSet" placeholder="Auto-derived from CodeSystem URL">
+                </div>
+
+                <p class="cs-hint">Concept count: <strong id="csConceptCount">0</strong> (auto-calculated from concepts below)</p>
+            </div>
+
+            <!-- Concepts section (shown in CodeSystem mode only) -->
+            <div id="conceptsSection" class="card" style="margin-top: 1rem; display: none;">
+                <div class="concepts-section-hdr">
+                    <h2>Concepts</h2>
+                    <div class="concepts-hdr-actions">
+                        <button type="button" class="btn btn-secondary" onclick="openConceptImportModal()" aria-label="Import concepts from text">Import</button>
+                        <button type="button" class="btn btn-primary" onclick="addRootConcept()" aria-label="Add root concept">+ Add Concept</button>
+                    </div>
+                </div>
+
+                <div class="concepts-table-wrapper">
+                    <table id="conceptsTable" class="concepts-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th class="concept-indent-cell"></th>
+                                <th style="width: 18%;">Code *</th>
+                                <th style="width: 22%;">Display</th>
+                                <th>Definition</th>
+                                <th style="width: 130px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="conceptsTableBody"></tbody>
+                    </table>
+                    <p id="conceptsEmptyMsg" class="concepts-empty-msg">No concepts yet. Click "+ Add Concept" to begin, or use Import to load from CSV.</p>
+                </div>
+            </div>
+
         </div>
 
         <div class="preview-column">
             <div class="card preview-section">
                 <h2>JSON Preview</h2>
                 <div id="jsonPreview" class="json-preview">
-                    // ValueSet JSON will appear here...
+                    // JSON will appear here...
                 </div>
                 <div class="output-actions">
                     <button class="btn btn-primary" onclick="downloadJSON()">Download JSON</button>
@@ -1309,6 +1576,43 @@
                         📋 View Diff
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Concept Import Modal -->
+    <div id="conceptImportModal" class="modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeConceptImportModal()"></div>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="conceptImportTitle" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="conceptImportTitle">Import Concepts</h3>
+                <button class="modal-close" onclick="closeConceptImportModal()" aria-label="Close dialog" title="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Enter one concept per line. Supported formats:<br>
+                    <code>code</code><br>
+                    <code>code,display</code><br>
+                    <code>code,display,definition</code><br>
+                    Use tab-separated values or commas. Indent child concepts with 2 spaces or 1 tab.
+                </p>
+                <div class="form-group">
+                    <label for="conceptImportText">Concepts</label>
+                    <textarea id="conceptImportText" class="code-list-input" style="min-height: 200px;"
+                        placeholder="level1,Level 1 - Self management,Evidence-informed self-help resources.&#10;level2,Level 2 - Low intensity services,Brief evidence-based treatments.&#10;  level2a,Level 2a Sub-concept,A child of level2."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="radio" name="importMode" value="append" checked> Append to existing concepts
+                    </label>
+                    <label style="margin-top: 0.25rem;">
+                        <input type="radio" name="importMode" value="replace"> Replace all existing concepts
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeConceptImportModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="importConceptsFromText()">Import</button>
             </div>
         </div>
     </div>
@@ -1524,7 +1828,13 @@
 
             // Server validation
             ONTOSERVER_BASE: 'https://tx.ontoserver.csiro.au/fhir',
-            VALIDATE_TIMEOUT: 30000                // 30 second timeout
+            VALIDATE_TIMEOUT: 30000,               // 30 second timeout
+
+            // CodeSystem-specific
+            CS_SHAREABLE_PROFILE: 'http://hl7.org/fhir/StructureDefinition/shareablecodesystem',
+            CS_NCTS_PROFILE: 'https://healthterminologies.gov.au/fhir/StructureDefinition/complete-code-system-4',
+            CS_BASE_URL: 'https://healthterminologies.gov.au/fhir/CodeSystem',
+            CS_VALIDATE_PATH: '/fhir/CodeSystem/$validate'
         };
 
         // =============================================================================
@@ -1685,7 +1995,21 @@
             draggedIncludeElement: null,
 
             // Preview debouncing
-            updatePreviewTimeoutId: null
+            updatePreviewTimeoutId: null,
+
+            // Resource type mode
+            resourceType: 'ValueSet',              // 'ValueSet' | 'CodeSystem'
+
+            // CodeSystem-specific state
+            csProperties: {
+                caseSensitive: false,
+                hierarchyMeaning: '',
+                compositional: false,
+                versionNeeded: false,
+                content: 'complete'
+            },
+            concepts: [],                          // tree: [{id, code, display, definition, children:[]}]
+            csLoadedUrl: null                      // preserved URL from loaded CodeSystem file
         };
 
         // =============================================================================
@@ -2427,6 +2751,16 @@
             const diffContent = diffModal.querySelector('[role="dialog"]');
             AppState.focusTraps.diffReport = createFocusTrap(diffModal, diffContent, closeDiffReport);
 
+            // Close concept import modal on Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const importModal = document.getElementById('conceptImportModal');
+                    if (importModal && importModal.style.display !== 'none') {
+                        closeConceptImportModal();
+                    }
+                }
+            });
+
             // Warn before leaving page with unsaved changes
             window.addEventListener('beforeunload', (e) => {
                 if (AppState.hasUnsavedChanges) {
@@ -2448,7 +2782,8 @@
             });
 
             // Explicit listeners for key fields to ensure they trigger updates
-            const keyFields = ['description', 'narrativeText', 'status', 'experimental', 'date', 'identifier'];
+            const keyFields = ['description', 'narrativeText', 'status', 'experimental', 'date', 'identifier',
+                               'csCaseSensitive', 'csCompositional', 'csVersionNeeded', 'csContent', 'csHierarchyMeaning', 'csValueSet'];
             keyFields.forEach(fieldId => {
                 const field = document.getElementById(fieldId);
                 if (field) {
@@ -2458,13 +2793,13 @@
             });
 
             // Clear loadedUrl when name, version, or publisher changes
-            // (loaded URL is no longer valid if these fields change)
             const urlDependentFields = ['name', 'version', 'publisher'];
             urlDependentFields.forEach(fieldId => {
                 const field = document.getElementById(fieldId);
                 if (field) {
                     field.addEventListener('input', () => {
                         AppState.loadedUrl = null;
+                        AppState.csLoadedUrl = null;
                     });
                 }
             });
@@ -2590,22 +2925,26 @@
         function getPublisherOidArc() {
             const publisherId = document.getElementById('publisher').value;
             const publisher = AppState.publishers.find(p => p.id === publisherId);
-            if (publisher && publisher.oidArcs && publisher.oidArcs.ValueSet) {
-                return publisher.oidArcs.ValueSet;
-            }
-            return null;
+            if (!publisher || !publisher.oidArcs) return null;
+            const arcKey = AppState.resourceType === 'CodeSystem' ? 'CodeSystem' : 'ValueSet';
+            return publisher.oidArcs[arcKey] || null;
         }
 
         function updateOidArcHint() {
             const hint = document.getElementById('oidArcHint');
             if (!hint) return;
             const arc = getPublisherOidArc();
+            const resourceType = AppState.resourceType;
             if (arc) {
-                hint.textContent = `Expected ValueSet OID arc: ${arc}.*`;
-                document.getElementById('identifier').placeholder = `e.g., ${arc}.10036`;
+                hint.textContent = `Expected ${resourceType} OID arc: ${arc}.*`;
+                const exampleSuffix = resourceType === 'CodeSystem' ? '10044' : '10036';
+                document.getElementById('identifier').placeholder = `e.g., ${arc}.${exampleSuffix}`;
             } else {
                 hint.textContent = '';
-                document.getElementById('identifier').placeholder = 'e.g., 1.2.36.1.2001.1004.201.10036';
+                const defaultExample = resourceType === 'CodeSystem'
+                    ? '1.2.36.1.2001.1004.200.10044'
+                    : '1.2.36.1.2001.1004.201.10036';
+                document.getElementById('identifier').placeholder = `e.g., ${defaultExample}`;
             }
         }
 
@@ -2838,7 +3177,9 @@
         function showValidationReport() {
             try {
                 console.log('Showing validation report...');
-                const results = validateValueSet();
+                const results = AppState.resourceType === 'CodeSystem'
+                    ? validateCodeSystem()
+                    : validateValueSet();
                 console.log('Validation results:', results);
 
                 const modal = document.getElementById('validationReportModal');
@@ -2998,16 +3339,20 @@
             resultsContainer.innerHTML = '';
 
             try {
-                const valueSet = generateValueSet();
+                const resource = getCurrentResource();
+                const isCS = AppState.resourceType === 'CodeSystem';
+                const validatePath = isCS
+                    ? `${FHIR_CONSTANTS.ONTOSERVER_BASE}${FHIR_CONSTANTS.CS_VALIDATE_PATH}`
+                    : `${FHIR_CONSTANTS.ONTOSERVER_BASE}/ValueSet/$validate`;
                 const response = await fetchWithTimeout(
-                    `${FHIR_CONSTANTS.ONTOSERVER_BASE}/ValueSet/$validate`,
+                    validatePath,
                     {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/fhir+json',
                             'Accept': 'application/fhir+json'
                         },
-                        body: JSON.stringify(valueSet)
+                        body: JSON.stringify(resource)
                     },
                     FHIR_CONSTANTS.VALIDATE_TIMEOUT
                 );
@@ -3077,8 +3422,8 @@
             const modal = document.getElementById('diffReportModal');
             const body = document.getElementById('diffReportBody');
 
-            // Generate current ValueSet
-            const currentValueSet = generateValueSet();
+            // Generate current resource
+            const currentValueSet = getCurrentResource();
 
             // Compare original vs current
             const differences = compareValueSets(AppState.originalLoadedValueSet, currentValueSet);
@@ -3276,10 +3621,13 @@
         }
 
         function updateValidationBadge() {
-            const results = validateValueSet();
+            const results = AppState.resourceType === 'CodeSystem'
+                ? validateCodeSystem()
+                : validateValueSet();
             const badge = document.getElementById('validationBadge');
             const icon = document.getElementById('validateIcon');
             const validateBtn = document.getElementById('validateBtn');
+            const rt = AppState.resourceType;
             const totalIssues = results.errors.length + results.warnings.length;
 
             if (totalIssues > 0) {
@@ -3289,16 +3637,16 @@
                 if (results.errors.length > 0) {
                     badge.classList.remove('warning-only');
                     icon.textContent = '✗';
-                    validateBtn.setAttribute('aria-label', `Validate ValueSet - ${results.errors.length} error${results.errors.length > 1 ? 's' : ''} found`);
+                    validateBtn.setAttribute('aria-label', `Validate ${rt} - ${results.errors.length} error${results.errors.length > 1 ? 's' : ''} found`);
                 } else {
                     badge.classList.add('warning-only');
                     icon.textContent = '⚠';
-                    validateBtn.setAttribute('aria-label', `Validate ValueSet - ${results.warnings.length} warning${results.warnings.length > 1 ? 's' : ''} found`);
+                    validateBtn.setAttribute('aria-label', `Validate ${rt} - ${results.warnings.length} warning${results.warnings.length > 1 ? 's' : ''} found`);
                 }
             } else {
                 badge.style.display = 'none';
                 icon.textContent = '✓';
-                validateBtn.setAttribute('aria-label', 'Validate ValueSet - No issues');
+                validateBtn.setAttribute('aria-label', `Validate ${rt} - No issues`);
             }
         }
 
@@ -3808,9 +4156,15 @@
         // PREVIEW & UI UPDATES
         // =============================================================================
 
+        function getCurrentResource() {
+            return AppState.resourceType === 'CodeSystem'
+                ? generateCodeSystem()
+                : generateValueSet();
+        }
+
         function updatePreview() {
-            const valueSet = generateValueSet();
-            const json = JSON.stringify(valueSet, null, 2);
+            const resource = getCurrentResource();
+            const json = JSON.stringify(resource, null, 2);
             document.getElementById('jsonPreview').innerHTML = syntaxHighlight(json);
 
             // Update validation badge - wrapped in try-catch to prevent blocking preview updates
@@ -3846,24 +4200,24 @@
         // =============================================================================
 
         function downloadJSON() {
-            const valueSet = generateValueSet();
-            const json = JSON.stringify(valueSet, null, 2);
+            const resource = getCurrentResource();
+            const json = JSON.stringify(resource, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `ValueSet-${valueSet.name}-${valueSet.version}.json`;
+            a.download = `${resource.resourceType}-${resource.name}-${resource.version}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showNotification('ValueSet downloaded successfully!');
-            markFormAsClean(); // Clear unsaved changes flag after successful download
+            showNotification(`${resource.resourceType} downloaded successfully!`);
+            markFormAsClean();
         }
 
         function copyToClipboard() {
-            const valueSet = generateValueSet();
-            const json = JSON.stringify(valueSet, null, 2);
+            const resource = getCurrentResource();
+            const json = JSON.stringify(resource, null, 2);
 
             if (!navigator.clipboard) {
                 showNotification('Clipboard API not available (requires HTTPS or localhost)', 'error');
@@ -3872,7 +4226,7 @@
             }
 
             navigator.clipboard.writeText(json).then(() => {
-                showNotification('Copied to clipboard!');
+                showNotification(`${AppState.resourceType} copied to clipboard!`);
             }).catch((err) => {
                 showNotification('Failed to copy to clipboard', 'error');
                 console.error('Clipboard error:', err);
@@ -3914,22 +4268,37 @@
 
             try {
                 const text = await file.text();
-                const valueSet = JSON.parse(text);
+                const resource = JSON.parse(text);
 
-                // Store original for diff comparison (deep clone)
-                AppState.originalLoadedValueSet = JSON.parse(JSON.stringify(valueSet));
+                // Route by resourceType field in the JSON
+                if (resource.resourceType === 'CodeSystem') {
+                    // Switch to CodeSystem mode (no unsaved-changes guard needed since we just loaded)
+                    if (AppState.resourceType !== 'CodeSystem') {
+                        AppState.resourceType = 'CodeSystem';
+                        applyResourceTypeUI('CodeSystem');
+                    }
+                    AppState.originalLoadedValueSet = JSON.parse(JSON.stringify(resource));
+                    populateFormFromCodeSystem(resource);
+                } else {
+                    // Default: treat as ValueSet
+                    if (AppState.resourceType !== 'ValueSet') {
+                        AppState.resourceType = 'ValueSet';
+                        applyResourceTypeUI('ValueSet');
+                    }
+                    AppState.originalLoadedValueSet = JSON.parse(JSON.stringify(resource));
+                    populateFormFromValueSet(resource);
+                }
 
-                populateFormFromValueSet(valueSet);
                 document.getElementById('loadedFileName').textContent = `Loaded: ${file.name}`;
 
                 // Validate loaded resource and show warnings (but don't change values)
-                const violations = validateLoadedResource(valueSet);
+                const violations = validateLoadedResource(resource);
                 if (violations.length > 0) {
-                    const violationMsg = 'ValueSet loaded with validation warnings:\n' + violations.join('\n');
+                    const violationMsg = `${resource.resourceType} loaded with validation warnings:\n` + violations.join('\n');
                     console.warn(violationMsg);
-                    showNotification('ValueSet loaded - See validation warnings below', 'warning');
+                    showNotification(`${resource.resourceType} loaded - See validation warnings`, 'warning');
                 } else {
-                    showNotification('ValueSet loaded! Update version and date as needed.');
+                    showNotification(`${resource.resourceType} loaded! Update version and date as needed.`);
                 }
 
                 // Highlight version field
@@ -4168,7 +4537,720 @@
             event.target.value = '';
         }
 
+        // =============================================================================
+        // RESOURCE TYPE MODE SWITCHING
+        // =============================================================================
+
+        function switchResourceType(type) {
+            if (AppState.resourceType === type) return;
+
+            if (AppState.hasUnsavedChanges) {
+                if (!confirm(`Switch to ${type} mode? Unsaved changes will be lost.`)) {
+                    return;
+                }
+            }
+
+            AppState.resourceType = type;
+            applyResourceTypeUI(type);
+            clearForm();
+        }
+
+        function applyResourceTypeUI(type) {
+            const isCS = type === 'CodeSystem';
+
+            // Mode buttons
+            document.getElementById('btnModeValueSet').classList.toggle('active', !isCS);
+            document.getElementById('btnModeValueSet').setAttribute('aria-pressed', String(!isCS));
+            document.getElementById('btnModeCodeSystem').classList.toggle('active', isCS);
+            document.getElementById('btnModeCodeSystem').setAttribute('aria-pressed', String(isCS));
+
+            // Section visibility
+            document.getElementById('includeSection').style.display = isCS ? 'none' : '';
+            document.getElementById('csPropertiesCard').style.display = isCS ? '' : 'none';
+            document.getElementById('conceptsSection').style.display = isCS ? '' : 'none';
+
+            // Page title
+            const titleText = isCS ? 'FHIR CodeSystem Creator' : 'FHIR ValueSet Creator';
+            const subtitleText = isCS
+                ? 'Create FHIR R4 CodeSystem resources for download'
+                : 'Create FHIR R4 ValueSet resources for download';
+            document.getElementById('pageTitle').textContent = titleText;
+            document.getElementById('pageSubtitle').textContent = subtitleText;
+            document.title = titleText;
+
+            // Load button
+            document.getElementById('loadFileBtn').textContent = `Load Existing ${type}`;
+
+            // Description placeholder / hint
+            const descEl = document.getElementById('description');
+            const descHint = descEl ? descEl.nextElementSibling : null;
+            if (isCS) {
+                if (descEl) descEl.placeholder = 'e.g., The [title] code system defines concepts that...';
+                if (descHint) descHint.textContent = 'Recommended pattern: "The [title] code system defines concepts that..."';
+            } else {
+                if (descEl) descEl.placeholder = 'e.g., The [title] value set includes values that...';
+                if (descHint) descHint.textContent = 'Recommended pattern: "The [title of value set] value set includes values that..."';
+            }
+
+            // OID arc hint
+            updateOidArcHint();
+        }
+
+        // =============================================================================
+        // CODESYSTEM - CONCEPT DATA MANAGEMENT
+        // =============================================================================
+
+        function generateConceptId() {
+            return 'concept-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+        }
+
+        function addRootConcept() {
+            const concept = { id: generateConceptId(), code: '', display: '', definition: '', children: [] };
+            AppState.concepts.push(concept);
+            renderConceptsTable();
+            debouncedUpdatePreview();
+            // Focus the new code input
+            setTimeout(() => {
+                const lastRow = document.querySelector(`[data-concept-id="${concept.id}"] .concept-code-input`);
+                if (lastRow) lastRow.focus();
+            }, 50);
+        }
+
+        function addChildConcept(parentId) {
+            const parent = findConceptById(parentId, AppState.concepts);
+            if (!parent) return;
+            const child = { id: generateConceptId(), code: '', display: '', definition: '', children: [] };
+            parent.children.push(child);
+            renderConceptsTable();
+            debouncedUpdatePreview();
+            setTimeout(() => {
+                const input = document.querySelector(`[data-concept-id="${child.id}"] .concept-code-input`);
+                if (input) input.focus();
+            }, 50);
+        }
+
+        function removeConcept(id) {
+            const concept = findConceptById(id, AppState.concepts);
+            const hasChildren = concept && concept.children && concept.children.length > 0;
+            if (hasChildren && !confirm('Remove this concept and all its children?')) return;
+            const removed = removeConceptById(id, AppState.concepts);
+            if (removed) {
+                renderConceptsTable();
+                debouncedUpdatePreview();
+            }
+        }
+
+        function removeConceptById(id, list) {
+            const idx = list.findIndex(c => c.id === id);
+            if (idx !== -1) {
+                list.splice(idx, 1);
+                return true;
+            }
+            for (const c of list) {
+                if (removeConceptById(id, c.children)) return true;
+            }
+            return false;
+        }
+
+        function findConceptById(id, list) {
+            for (const c of list) {
+                if (c.id === id) return c;
+                const found = findConceptById(id, c.children);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function findParentList(id, list) {
+            if (list.some(c => c.id === id)) return list;
+            for (const c of list) {
+                const found = findParentList(id, c.children);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function moveConceptUp(id) {
+            const siblings = findParentList(id, AppState.concepts);
+            if (!siblings) return;
+            const idx = siblings.findIndex(c => c.id === id);
+            if (idx <= 0) return;
+            [siblings[idx - 1], siblings[idx]] = [siblings[idx], siblings[idx - 1]];
+            renderConceptsTable();
+            debouncedUpdatePreview();
+        }
+
+        function moveConceptDown(id) {
+            const siblings = findParentList(id, AppState.concepts);
+            if (!siblings) return;
+            const idx = siblings.findIndex(c => c.id === id);
+            if (idx < 0 || idx >= siblings.length - 1) return;
+            [siblings[idx], siblings[idx + 1]] = [siblings[idx + 1], siblings[idx]];
+            renderConceptsTable();
+            debouncedUpdatePreview();
+        }
+
+        function updateConceptField(id, field, value) {
+            const concept = findConceptById(id, AppState.concepts);
+            if (concept) {
+                concept[field] = value;
+                markFormAsDirty();
+                debouncedUpdatePreview();
+            }
+        }
+
+        function countAllConcepts(concepts) {
+            if (!concepts || concepts.length === 0) return 0;
+            return concepts.reduce((sum, c) => sum + 1 + countAllConcepts(c.children), 0);
+        }
+
+        function flattenConcepts(concepts, depth) {
+            const result = [];
+            concepts.forEach((c, idx) => {
+                result.push({ concept: c, depth: depth, isFirst: idx === 0, isLast: idx === concepts.length - 1, siblings: concepts });
+                flattenConcepts(c.children, depth + 1).forEach(r => result.push(r));
+            });
+            return result;
+        }
+
+        // =============================================================================
+        // CODESYSTEM - CONCEPT TABLE RENDERING
+        // =============================================================================
+
+        function renderConceptsTable() {
+            const tbody = document.getElementById('conceptsTableBody');
+            const table = document.getElementById('conceptsTable');
+            const emptyMsg = document.getElementById('conceptsEmptyMsg');
+            const countEl = document.getElementById('csConceptCount');
+
+            if (!tbody) return;
+
+            const total = countAllConcepts(AppState.concepts);
+            if (countEl) countEl.textContent = total;
+
+            if (total === 0) {
+                table.style.display = 'none';
+                emptyMsg.style.display = '';
+                return;
+            }
+
+            table.style.display = '';
+            emptyMsg.style.display = 'none';
+
+            const flat = flattenConcepts(AppState.concepts, 0);
+            tbody.innerHTML = '';
+
+            flat.forEach(({ concept, depth, isFirst, isLast, siblings }) => {
+                const row = document.createElement('tr');
+                row.setAttribute('data-concept-id', concept.id);
+                row.setAttribute('data-depth', depth);
+
+                const indentPx = depth * 24;
+                const escId = concept.id.replace(/[^a-z0-9\-]/gi, '_');
+
+                row.innerHTML = `
+                    <td class="concept-indent-cell" style="padding-left: ${indentPx}px;">
+                        <span style="color: var(--text-muted); font-size: 0.7rem;">${depth > 0 ? '└' : ''}</span>
+                    </td>
+                    <td>
+                        <input type="text" class="concept-code-input"
+                               id="code_${escId}"
+                               value="${escapeHtml(concept.code)}"
+                               placeholder="code"
+                               aria-label="Code"
+                               onchange="updateConceptField('${concept.id}', 'code', this.value)"
+                               oninput="markFormAsDirty()">
+                    </td>
+                    <td>
+                        <input type="text" class="concept-display-input"
+                               value="${escapeHtml(concept.display)}"
+                               placeholder="display"
+                               aria-label="Display"
+                               onchange="updateConceptField('${concept.id}', 'display', this.value)"
+                               oninput="markFormAsDirty()">
+                    </td>
+                    <td>
+                        <textarea class="concept-definition-input"
+                                  placeholder="definition"
+                                  aria-label="Definition"
+                                  onchange="updateConceptField('${concept.id}', 'definition', this.value)"
+                                  oninput="markFormAsDirty()">${escapeHtml(concept.definition)}</textarea>
+                    </td>
+                    <td>
+                        <div class="concept-actions">
+                            <button type="button" class="concept-action-btn"
+                                    onclick="addChildConcept('${concept.id}')"
+                                    title="Add child concept">+Child</button>
+                            <button type="button" class="concept-action-btn"
+                                    onclick="moveConceptUp('${concept.id}')"
+                                    title="Move up"
+                                    ${isFirst ? 'disabled' : ''}>↑</button>
+                            <button type="button" class="concept-action-btn"
+                                    onclick="moveConceptDown('${concept.id}')"
+                                    title="Move down"
+                                    ${isLast ? 'disabled' : ''}>↓</button>
+                            <button type="button" class="concept-action-btn danger"
+                                    onclick="removeConcept('${concept.id}')"
+                                    title="Remove concept">&times;</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // =============================================================================
+        // CODESYSTEM - GENERATION
+        // =============================================================================
+
+        function buildConceptsArray(concepts) {
+            return concepts
+                .filter(c => c.code)
+                .map(c => {
+                    const obj = { code: c.code };
+                    if (c.display) obj.display = c.display;
+                    if (c.definition) obj.definition = c.definition;
+                    if (c.children && c.children.length > 0) {
+                        const childArr = buildConceptsArray(c.children);
+                        if (childArr.length > 0) obj.concept = childArr;
+                    }
+                    return obj;
+                });
+        }
+
+        function generateCodeSystem() {
+            const name = document.getElementById('name').value || 'ExampleCodeSystem';
+            const version = document.getElementById('version').value || '1.0.0';
+            const title = document.getElementById('title').value || '';
+            const description = document.getElementById('description').value || '';
+            const narrativeText = document.getElementById('narrativeText').value || description;
+            const status = document.getElementById('status').value;
+            const experimental = document.getElementById('experimental').checked;
+            const date = document.getElementById('date').value;
+            const identifier = document.getElementById('identifier').value;
+
+            // CS-specific fields
+            const caseSensitive = document.getElementById('csCaseSensitive').checked;
+            const compositional = document.getElementById('csCompositional').checked;
+            const versionNeeded = document.getElementById('csVersionNeeded').checked;
+            const content = document.getElementById('csContent').value;
+            const hierarchyMeaning = document.getElementById('csHierarchyMeaning').value;
+            const csValueSetOverride = document.getElementById('csValueSet').value.trim();
+
+            // Publisher and copyright (shared with ValueSet)
+            const publisherId = document.getElementById('publisher').value;
+            const publisher = AppState.publishers.find(p => p.id === publisherId);
+
+            // Derive ID and URL
+            const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+            const majorVersion = version.split('.')[0];
+            const id = `${kebabName}-${majorVersion}`;
+
+            let url;
+            if (AppState.csLoadedUrl) {
+                url = AppState.csLoadedUrl;
+            } else {
+                let baseUrl = FHIR_CONSTANTS.CS_BASE_URL;
+                if (publisher && publisher.baseUrl) {
+                    // Derive CS base from publisher baseUrl by replacing /ValueSet with /CodeSystem
+                    baseUrl = publisher.baseUrl.replace(/\/ValueSet$/, '/CodeSystem');
+                }
+                url = `${baseUrl}/${kebabName}-${majorVersion}`;
+            }
+
+            // Copyright
+            let copyrightText = '';
+            if (AppState.selectedCopyrights.length > 0) {
+                const currentYear = new Date().getFullYear();
+                const paragraphs = AppState.selectedCopyrights.map(cid => {
+                    const tmpl = AppState.copyrights.find(c => c.id === cid);
+                    if (!tmpl) return '';
+                    return tmpl.template
+                        .replace(/\{\{year\}\}/g, currentYear)
+                        .replace(/\{\{publisher\}\}/g, publisher?.name || '');
+                }).filter(Boolean);
+                copyrightText = paragraphs.join(' \n\n');
+            }
+
+            // Narrative
+            const narrativeDiv = `<div xmlns="http://www.w3.org/1999/xhtml"><h2>${title}</h2><tt>${url}</tt><p>${narrativeText}</p></div>`;
+
+            // Concepts
+            const conceptArray = buildConceptsArray(AppState.concepts);
+            const conceptCount = countAllConcepts(AppState.concepts);
+
+            // Implicit value set URL
+            const implicitValueSetUrl = csValueSetOverride || (url ? `${url}/vs` : '');
+
+            // Only include hierarchyMeaning if there are child concepts and a value is selected
+            const hasHierarchy = AppState.concepts.some(c => c.children && c.children.length > 0);
+
+            const cs = {
+                resourceType: 'CodeSystem',
+                id: id,
+                meta: {
+                    profile: [
+                        FHIR_CONSTANTS.CS_SHAREABLE_PROFILE,
+                        FHIR_CONSTANTS.CS_NCTS_PROFILE
+                    ]
+                },
+                text: {
+                    status: 'generated',
+                    div: narrativeDiv
+                },
+                url: url
+            };
+
+            if (identifier) {
+                cs.identifier = [{
+                    system: 'urn:ietf:rfc:3986',
+                    value: `urn:oid:${identifier}`
+                }];
+            }
+
+            cs.version = version;
+            cs.name = name;
+            cs.title = title;
+            cs.status = status;
+            cs.experimental = experimental;
+
+            if (date) cs.date = date;
+
+            if (publisher) {
+                cs.publisher = publisher.name;
+                cs.contact = [{
+                    telecom: [{
+                        system: publisher.contact.system,
+                        value: publisher.contact.value
+                    }]
+                }];
+            }
+
+            cs.description = description;
+
+            if (copyrightText) cs.copyright = copyrightText;
+
+            cs.caseSensitive = caseSensitive;
+
+            if (implicitValueSetUrl) cs.valueSet = implicitValueSetUrl;
+
+            if (hasHierarchy && hierarchyMeaning) cs.hierarchyMeaning = hierarchyMeaning;
+
+            cs.compositional = compositional;
+            cs.versionNeeded = versionNeeded;
+            cs.content = content;
+
+            if (conceptCount > 0) cs.count = conceptCount;
+
+            if (conceptArray.length > 0) cs.concept = conceptArray;
+
+            return cs;
+        }
+
+        // =============================================================================
+        // CODESYSTEM - LOADING FROM FILE
+        // =============================================================================
+
+        function parseFhirConceptsToTree(fhirConcepts) {
+            if (!fhirConcepts || !Array.isArray(fhirConcepts)) return [];
+            return fhirConcepts.map(c => ({
+                id: generateConceptId(),
+                code: c.code || '',
+                display: c.display || '',
+                definition: c.definition || '',
+                children: parseFhirConceptsToTree(c.concept)
+            }));
+        }
+
+        function populateFormFromCodeSystem(cs) {
+            // Shared metadata fields
+            document.getElementById('title').value = cs.title || '';
+            document.getElementById('name').value = cs.name || '';
+            document.getElementById('description').value = cs.description || '';
+            document.getElementById('version').value = cs.version || '1.0.0';
+            document.getElementById('status').value = cs.status || 'active';
+            document.getElementById('experimental').checked = cs.experimental === true;
+
+            // Store loaded URL
+            AppState.csLoadedUrl = cs.url || null;
+
+            // Set date to today for new version
+            setDefaultDate();
+
+            // Narrative
+            if (cs.text?.div) {
+                const match = cs.text.div.match(/<p>(.*?)<\/p>/);
+                if (match) document.getElementById('narrativeText').value = match[1];
+            }
+
+            // Identifier
+            if (cs.identifier?.[0]?.value) {
+                document.getElementById('identifier').value = cs.identifier[0].value.replace('urn:oid:', '');
+            }
+
+            // Publisher
+            if (cs.publisher) {
+                const matchedPub = AppState.publishers.find(p => p.name === cs.publisher);
+                if (matchedPub) document.getElementById('publisher').value = matchedPub.id;
+            }
+
+            // Copyright
+            AppState.selectedCopyrights = [];
+            if (cs.copyright) {
+                const paragraphs = cs.copyright.split(' \n\n');
+                paragraphs.forEach(paragraph => {
+                    const trimmed = paragraph.trim();
+                    if (!trimmed) return;
+                    const matched = AppState.copyrights.find(c => {
+                        const template = c.template
+                            .replace(/\{\{year\}\}/g, '\\d{4}')
+                            .replace(/\{\{publisher\}\}/g, '.+?');
+                        const pattern = template
+                            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                            .replace(/\\\\d\{4\}/g, '\\d{4}')
+                            .replace(/\\\.\+\?/g, '.+?');
+                        try {
+                            const regex = new RegExp(pattern.substring(0, FHIR_CONSTANTS.COPYRIGHT_PATTERN_MATCH_LENGTH));
+                            return regex.test(trimmed.substring(0, FHIR_CONSTANTS.COPYRIGHT_PATTERN_MATCH_LENGTH));
+                        } catch (e) {
+                            return trimmed.includes(c.template.substring(0, FHIR_CONSTANTS.COPYRIGHT_FALLBACK_LENGTH)
+                                .replace(/\{\{year\}\}/g, '').replace(/\{\{publisher\}\}/g, ''));
+                        }
+                    });
+                    if (matched && !AppState.selectedCopyrights.includes(matched.id)) {
+                        AppState.selectedCopyrights.push(matched.id);
+                    }
+                });
+                renderCopyrightList();
+            }
+
+            // CS-specific properties
+            document.getElementById('csCaseSensitive').checked = cs.caseSensitive === true;
+            document.getElementById('csCompositional').checked = cs.compositional === true;
+            document.getElementById('csVersionNeeded').checked = cs.versionNeeded === true;
+            document.getElementById('csContent').value = cs.content || 'complete';
+            document.getElementById('csHierarchyMeaning').value = cs.hierarchyMeaning || '';
+
+            // Implicit value set URL - only populate if it differs from auto-derived
+            const autoValueSetUrl = cs.url ? `${cs.url}/vs` : '';
+            document.getElementById('csValueSet').value = (cs.valueSet && cs.valueSet !== autoValueSetUrl) ? cs.valueSet : '';
+
+            // Reconstruct concept tree
+            AppState.concepts = parseFhirConceptsToTree(cs.concept);
+            renderConceptsTable();
+
+            updateOidArcHint();
+            updatePreview();
+        }
+
+        // =============================================================================
+        // CODESYSTEM - VALIDATION
+        // =============================================================================
+
+        function validateCodeSystem() {
+            const results = { errors: [], warnings: [], info: [] };
+
+            // Required fields
+            const title = document.getElementById('title').value.trim();
+            const name = document.getElementById('name').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const publisherId = document.getElementById('publisher').value;
+            const publisher = AppState.publishers.find(p => p.id === publisherId);
+            const version = document.getElementById('version').value.trim();
+            const date = document.getElementById('date').value;
+            const content = document.getElementById('csContent').value;
+            const identifier = document.getElementById('identifier').value.trim();
+
+            if (!title) results.errors.push('Title field is required');
+            if (!name) results.errors.push('Name field is required');
+            if (!description) results.errors.push('Description field is required');
+            if (!publisher) results.errors.push('Publisher must be selected');
+            if (!version) results.errors.push('Version field is required');
+            if (!date) results.errors.push('Date field is required');
+
+            // Name format
+            if (name) {
+                if (!FHIR_CONSTANTS.NAME_PATTERN.test(name)) {
+                    results.errors.push('Name must be PascalCase: start with capital letter, alphanumeric/underscore only');
+                }
+                if (name.length > FHIR_CONSTANTS.MAX_NAME_LENGTH) {
+                    results.errors.push(`Name must not exceed ${FHIR_CONSTANTS.MAX_NAME_LENGTH} characters`);
+                }
+                if (version) {
+                    const kebabName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+                    const currentId = `${kebabName}-${version.split('.')[0]}`;
+                    if (currentId.length > FHIR_CONSTANTS.MAX_ID_LENGTH) {
+                        results.errors.push(`ID length (${currentId.length}) exceeds limit of ${FHIR_CONSTANTS.MAX_ID_LENGTH} characters`);
+                    }
+                }
+            }
+
+            // Concept checks
+            const total = countAllConcepts(AppState.concepts);
+            if (content === 'complete' && total === 0) {
+                results.warnings.push('Content is "complete" but no concepts have been defined');
+            }
+
+            // Duplicate code check
+            const allCodes = [];
+            function collectCodes(concepts) {
+                concepts.forEach(c => {
+                    if (c.code) allCodes.push(c.code.toLowerCase());
+                    collectCodes(c.children);
+                });
+            }
+            collectCodes(AppState.concepts);
+            const duplicates = allCodes.filter((code, i) => allCodes.indexOf(code) !== i);
+            if (duplicates.length > 0) {
+                results.errors.push(`Duplicate codes found: ${[...new Set(duplicates)].join(', ')}`);
+            }
+
+            // Concept quality
+            let missingDisplay = 0, missingDefinition = 0;
+            function checkConceptQuality(concepts) {
+                concepts.forEach(c => {
+                    if (c.code && !c.display) missingDisplay++;
+                    if (c.code && !c.definition) missingDefinition++;
+                    checkConceptQuality(c.children);
+                });
+            }
+            checkConceptQuality(AppState.concepts);
+            if (missingDisplay > 0) results.warnings.push(`${missingDisplay} concept(s) missing display text`);
+            if (missingDefinition > 0) results.warnings.push(`${missingDefinition} concept(s) missing definition`);
+
+            // Best practices
+            const status = document.getElementById('status').value;
+            const experimental = document.getElementById('experimental').checked;
+            if (status !== 'active') results.warnings.push('Status should be "active" for production resources');
+            if (experimental) results.warnings.push('Experimental should be false for production resources');
+            if (AppState.selectedCopyrights.length === 0) results.warnings.push('No copyright notices selected');
+            if (!identifier) results.warnings.push('Identifier (OID) not provided (recommended for NCTS resources)');
+            if (identifier) {
+                const expectedArc = getPublisherOidArc();
+                if (expectedArc && !identifier.startsWith(expectedArc + '.')) {
+                    results.warnings.push(`OID does not match expected CodeSystem arc for this publisher (expected prefix: ${expectedArc}.*)`);
+                }
+            }
+
+            // Info
+            if (title) results.info.push('✓ Title is provided');
+            if (name && FHIR_CONSTANTS.NAME_PATTERN.test(name)) results.info.push('✓ Name conforms to PascalCase format');
+            if (description) results.info.push('✓ Description is provided');
+            if (publisher) results.info.push('✓ Publisher is selected');
+            if (version) results.info.push('✓ Version is provided');
+            if (date) results.info.push('✓ Date is provided');
+            if (identifier) results.info.push('✓ Identifier (OID) is provided');
+            if (status === 'active') results.info.push('✓ Status is set to "active"');
+            if (!experimental) results.info.push('✓ Experimental is set to false');
+            if (AppState.selectedCopyrights.length > 0) results.info.push(`✓ ${AppState.selectedCopyrights.length} copyright notice(s) selected`);
+            if (total > 0) results.info.push(`✓ ${total} concept(s) defined`);
+            results.info.push('✓ Meta profiles automatically included');
+
+            return results;
+        }
+
+        // =============================================================================
+        // CODESYSTEM - BULK IMPORT
+        // =============================================================================
+
+        function openConceptImportModal() {
+            document.getElementById('conceptImportText').value = '';
+            document.getElementById('conceptImportModal').style.display = 'flex';
+            document.getElementById('conceptImportText').focus();
+        }
+
+        function closeConceptImportModal() {
+            document.getElementById('conceptImportModal').style.display = 'none';
+        }
+
+        function importConceptsFromText() {
+            const text = document.getElementById('conceptImportText').value;
+            const mode = document.querySelector('input[name="importMode"]:checked').value;
+
+            if (!text.trim()) {
+                showNotification('No text to import', 'warning');
+                return;
+            }
+
+            const lines = text.split('\n');
+            const importedRoots = [];
+            const stack = []; // [{depth, concept}]
+
+            lines.forEach(rawLine => {
+                if (!rawLine.trim()) return;
+
+                // Measure indent depth (2 spaces or 1 tab = 1 depth level)
+                let indent = 0;
+                let line = rawLine;
+                const tabMatch = rawLine.match(/^(\t+)/);
+                const spaceMatch = rawLine.match(/^( +)/);
+                if (tabMatch) {
+                    indent = tabMatch[1].length;
+                    line = rawLine.slice(tabMatch[1].length);
+                } else if (spaceMatch) {
+                    indent = Math.floor(spaceMatch[1].length / 2);
+                    line = rawLine.slice(spaceMatch[1].length);
+                }
+
+                // Parse the line: split on comma or tab
+                const parts = line.includes('\t')
+                    ? line.split('\t')
+                    : line.split(',');
+
+                const code = (parts[0] || '').trim();
+                const display = (parts[1] || '').trim();
+                const definition = (parts.slice(2).join(',')).trim();
+
+                if (!code) return;
+
+                const concept = {
+                    id: generateConceptId(),
+                    code: code,
+                    display: display,
+                    definition: definition,
+                    children: []
+                };
+
+                // Place concept at the right depth
+                stack.splice(indent); // trim stack to current depth
+                if (stack.length === 0) {
+                    importedRoots.push(concept);
+                } else {
+                    stack[stack.length - 1].children.push(concept);
+                }
+                stack.push(concept);
+            });
+
+            if (importedRoots.length === 0) {
+                showNotification('No valid concepts found to import', 'warning');
+                return;
+            }
+
+            if (mode === 'replace') {
+                AppState.concepts = importedRoots;
+            } else {
+                AppState.concepts = AppState.concepts.concat(importedRoots);
+            }
+
+            closeConceptImportModal();
+            renderConceptsTable();
+            debouncedUpdatePreview();
+            markFormAsDirty();
+            showNotification(`Imported ${countAllConcepts(importedRoots)} concept(s)`);
+        }
+
         function clearForm() {
+            // Shared metadata
             document.getElementById('title').value = '';
             document.getElementById('name').value = '';
             document.getElementById('description').value = '';
@@ -4182,11 +5264,25 @@
             AppState.selectedCopyrights = [];
             renderCopyrightList();
 
-            // Clear include blocks
-            AppState.includeBlocks = [];
-            renderIncludeBlocksList();
-            clearIncludeEditorForms();
-            document.getElementById('includeTypeSelect').value = '';
+            if (AppState.resourceType === 'CodeSystem') {
+                // Clear CodeSystem-specific state
+                AppState.concepts = [];
+                AppState.csLoadedUrl = null;
+                document.getElementById('csCaseSensitive').checked = false;
+                document.getElementById('csCompositional').checked = false;
+                document.getElementById('csVersionNeeded').checked = false;
+                document.getElementById('csContent').value = 'complete';
+                document.getElementById('csHierarchyMeaning').value = '';
+                document.getElementById('csValueSet').value = '';
+                renderConceptsTable();
+            } else {
+                // Clear ValueSet-specific state
+                AppState.includeBlocks = [];
+                renderIncludeBlocksList();
+                clearIncludeEditorForms();
+                document.getElementById('includeTypeSelect').value = '';
+                AppState.loadedUrl = null;
+            }
 
             document.getElementById('loadedFileName').textContent = '';
             document.getElementById('version').classList.remove('version-highlight');
@@ -4195,14 +5291,10 @@
             updatePreview();
             showNotification('Form cleared');
 
-            // Clear original loaded ValueSet and URL
             AppState.originalLoadedValueSet = null;
-            AppState.loadedUrl = null;
 
-            // Disable diff button since there's no original to compare against
             disableDiffButton();
-
-            markFormAsClean(); // Clear unsaved changes flag after clearing form
+            markFormAsClean();
         }
     </script>
 </body>
